@@ -1,0 +1,5 @@
+/vendor/
+assets/E-Signature
+.DS_Store
+__pycache__/
+*.pyc
