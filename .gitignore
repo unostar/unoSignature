@@ -1,0 +1,14 @@
+# Local development — not published to GitHub
+.agent.md
+.cursor/
+.vscode/
+assets/
+composer.json
+composer.lock
+esignature-current.php
+esignature-previous.php
+
+/vendor/
+.DS_Store
+__pycache__/
+*.pyc
