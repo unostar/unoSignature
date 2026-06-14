@@ -2,6 +2,20 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.6
+
+- Added Firma test API key and test mode toggle in plugin settings.
+- Added local dev scripts for Firma create-request and fake-webhook flows.
+- Report WordPress compatibility in private update metadata.
+
+## 0.1.5
+
+- Collapsed GitHub updater settings behind a closed details panel.
+
+## 0.1.4
+
+- Masked Firma API key and webhook secret in settings like the GitHub token.
+
 ## 0.1.2
 
 - Renamed checkout helper functions from `unosignature_*` to `uno_*`.

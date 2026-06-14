@@ -12,3 +12,4 @@ esignature-previous.php
 .DS_Store
 __pycache__/
 *.pyc
+scripts/dev/local.env

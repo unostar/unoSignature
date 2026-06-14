@@ -25,8 +25,12 @@ Handled events:
 
 ## Updates
 
-Private GitHub Releases updates are configured in **Settings → unoSignature**:
+Private GitHub Releases updates are configured in **Settings → unoSignature** (collapsed section):
 
 - GitHub repo (e.g. `unostar/unoSignature`)
-- GitHub token
+- GitHub PAT token
 - Release asset name (`unosignature.zip`)
+
+## Firma test mode
+
+Settings include a **test API key** and **Use test API key** toggle. Test requests do not consume live Firma credits (signing requests are watermarked).
