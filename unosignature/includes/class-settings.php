@@ -15,6 +15,7 @@ final class Settings {
 	public static function init(): void {
 		add_action('admin_menu', [self::class, 'add_page']);
 		add_action('admin_init', [self::class, 'register']);
+		add_action('admin_head-settings_page_unosignature', [self::class, 'admin_styles']);
 	}
 
 	public static function add_page(): void {
@@ -81,7 +82,7 @@ final class Settings {
 		?>
 		<div class="wrap">
 			<h1>unoSignature</h1>
-			<p>Firma API credentials and private GitHub Releases update settings.</p>
+			<p>Firma API credentials and checkout template settings.</p>
 			<form method="post" action="options.php">
 				<?php settings_fields('unosignature'); ?>
 				<table class="form-table" role="presentation">
@@ -99,10 +100,18 @@ final class Settings {
 							</label>
 						</td>
 					</tr>
-					<?php self::text_row('github_repo', 'GitHub repo', $options, 'text', 'unostar/unoSignature'); ?>
-					<?php self::text_row('github_token', 'GitHub token', $options, 'password', !empty($options['github_token']) ? 'Token is saved; leave blank to keep it' : ''); ?>
-					<?php self::text_row('github_release_asset', 'Release asset name', $options, 'text', 'unosignature.zip'); ?>
 				</table>
+
+				<details class="unosignature-settings-panel">
+					<summary><?php esc_html_e('Plugin updates (GitHub)', 'unosignature'); ?></summary>
+					<p class="description"><?php esc_html_e('Private GitHub Releases updater. Leave collapsed unless you need to change update credentials.', 'unosignature'); ?></p>
+					<table class="form-table" role="presentation">
+						<?php self::text_row('github_repo', 'GitHub repo', $options, 'text', 'unostar/unoSignature'); ?>
+						<?php self::text_row('github_token', 'GitHub token', $options, 'password', !empty($options['github_token']) ? 'Token is saved; leave blank to keep it' : ''); ?>
+						<?php self::text_row('github_release_asset', 'Release asset name', $options, 'text', 'unosignature.zip'); ?>
+					</table>
+				</details>
+
 				<?php submit_button(); ?>
 			</form>
 		</div>
@@ -127,6 +136,33 @@ final class Settings {
 				/>
 			</td>
 		</tr>
+		<?php
+	}
+
+	public static function admin_styles(): void {
+		?>
+		<style>
+			.unosignature-settings-panel {
+				margin: 1.5em 0;
+				max-width: 960px;
+			}
+
+			.unosignature-settings-panel > summary {
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: 600;
+				line-height: 1.4;
+				list-style: revert;
+			}
+
+			.unosignature-settings-panel[open] > summary {
+				margin-bottom: 0.75em;
+			}
+
+			.unosignature-settings-panel > .description {
+				margin: 0 0 1em;
+			}
+		</style>
 		<?php
 	}
 }
