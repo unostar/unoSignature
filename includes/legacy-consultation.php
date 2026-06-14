@@ -33,6 +33,25 @@ if (!function_exists('uno_debug')) {
 	}
 }
 
+/**
+ * Returns the active Firma API key (test or live).
+ */
+function uno_get_firma_api_key(): string {
+	if (class_exists('\UnoSignature\Config')) {
+		return \UnoSignature\Config::get_firma_api_key();
+	}
+
+	if (defined('FIRMA_USE_TEST_KEY') && constant('FIRMA_USE_TEST_KEY') && defined('FIRMA_TEST_API_KEY')) {
+		return (string) constant('FIRMA_TEST_API_KEY');
+	}
+
+	if (defined('FIRMA_API_KEY')) {
+		return (string) constant('FIRMA_API_KEY');
+	}
+
+	return '';
+}
+
 // =========================================================================
 // Template map & cart resolver
 // =========================================================================
@@ -204,10 +223,10 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 
 	if ($errors->has_errors()) return;
 
-	$api_key = defined('FIRMA_API_KEY') ? constant('FIRMA_API_KEY') : null;
+	$api_key = uno_get_firma_api_key();
 	$template_id = uno_resolve_template_for_cart();
 	$agreement_group = uno_resolve_agreement_group_for_cart();
-	if (!$template_id || !$agreement_group || !$api_key) return;
+	if (!$template_id || !$agreement_group || $api_key === '') return;
 
 	$first = $data['billing_first_name'] ?? '';
 	$last  = $data['billing_last_name'] ?? '';
@@ -1125,7 +1144,7 @@ function uno_send_webhook_ack_now()
 function uno_process_certificate_generated_owner_copy(array $event_data)
 {
 	$request_id = $event_data['signing_request']['id'] ?? '';
-	$api_key = defined('FIRMA_API_KEY') ? constant('FIRMA_API_KEY') : '';
+	$api_key = uno_get_firma_api_key();
 	$owner_email = defined('FIRMA_OWNER_COPY_EMAIL') ? constant('FIRMA_OWNER_COPY_EMAIL') : '';
 
 	if (!$request_id || !$api_key || !$owner_email) {

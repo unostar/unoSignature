@@ -41,7 +41,7 @@ final class Updater {
 			'new_version' => (string) $release['version'],
 			'url'         => (string) ($release['html_url'] ?? 'https://unostar.dev/'),
 			'package'     => (string) $release['asset_url'],
-			'tested'      => '',
+			'tested'      => get_bloginfo('version'),
 		];
 
 		return $transient;

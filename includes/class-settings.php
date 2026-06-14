@@ -54,6 +54,11 @@ final class Settings {
 			$firma_webhook_secret = (string) $current['firma_webhook_secret'];
 		}
 
+		$firma_test_api_key = sanitize_text_field((string) ($input['firma_test_api_key'] ?? ''));
+		if ($firma_test_api_key === '' && !empty($current['firma_test_api_key'])) {
+			$firma_test_api_key = (string) $current['firma_test_api_key'];
+		}
+
 		$github_token = sanitize_text_field((string) ($input['github_token'] ?? ''));
 		if ($github_token === '' && !empty($current['github_token'])) {
 			$github_token = (string) $current['github_token'];
@@ -61,6 +66,8 @@ final class Settings {
 
 		return [
 			'firma_api_key'            => $firma_api_key,
+			'firma_test_api_key'       => $firma_test_api_key,
+			'firma_use_test_key'       => !empty($input['firma_use_test_key']) ? '1' : '',
 			'firma_webhook_secret'     => $firma_webhook_secret,
 			'firma_owner_copy_email'   => sanitize_email((string) ($input['firma_owner_copy_email'] ?? '')),
 			'paid_consultation_en'     => sanitize_text_field((string) ($input['paid_consultation_en'] ?? '')),
@@ -86,7 +93,17 @@ final class Settings {
 			<form method="post" action="options.php">
 				<?php settings_fields('unosignature'); ?>
 				<table class="form-table" role="presentation">
-					<?php self::text_row('firma_api_key', 'Firma API key', $options, 'password', !empty($options['firma_api_key']) ? 'Key is saved; leave blank to keep it' : ''); ?>
+					<?php self::text_row('firma_api_key', 'Firma API key (live)', $options, 'password', !empty($options['firma_api_key']) ? 'Key is saved; leave blank to keep it' : ''); ?>
+					<?php self::text_row('firma_test_api_key', 'Firma API key (test)', $options, 'password', !empty($options['firma_test_api_key']) ? 'Key is saved; leave blank to keep it' : ''); ?>
+					<tr>
+						<th scope="row">Firma test mode</th>
+						<td>
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr(Config::OPTION_KEY); ?>[firma_use_test_key]" value="1" <?php checked(!empty($options['firma_use_test_key'])); ?> />
+								<?php esc_html_e('Use test API key (no live credits; watermarked signing requests)', 'unosignature'); ?>
+							</label>
+						</td>
+					</tr>
 					<?php self::text_row('firma_webhook_secret', 'Firma webhook secret', $options, 'password', !empty($options['firma_webhook_secret']) ? 'Secret is saved; leave blank to keep it' : ''); ?>
 					<?php self::text_row('firma_owner_copy_email', 'Owner copy email', $options, 'email'); ?>
 					<?php self::text_row('paid_consultation_en', 'Paid Consultation EN template ID', $options); ?>
