@@ -4,7 +4,8 @@ All notable changes to unoSignature will be documented in this file.
 
 ## 0.1.11
 
-- Backfill GitHub Release notes for older versions from `CHANGELOG.md`.
+- Fix product search in signing agreement rules with substring, SKU, and ID matching.
+- Improve multi-select tag layout in agreement rules settings.
 
 ## 0.1.10
 
