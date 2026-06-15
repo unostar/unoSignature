@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.10
+
+- Publish GitHub Release notes from `CHANGELOG.md` instead of generic automated text.
+
 ## 0.1.9
 
 - Allow saving an empty signing rules list and fully removing the last rule.

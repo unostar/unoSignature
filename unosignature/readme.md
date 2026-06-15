@@ -53,6 +53,8 @@ Private GitHub Releases updates are configured in **Settings → unoSignature** 
 - GitHub PAT token
 - Release asset name (`unosignature.zip`)
 
+Release notes on GitHub are generated automatically from `CHANGELOG.md` when CI publishes a new version.
+
 ## Firma test mode
 
 Settings include a **test API key** and **Use test API key** toggle. Test requests do not consume live Firma credits (signing requests are watermarked).
