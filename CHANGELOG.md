@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.11
+
+- Backfill GitHub Release notes for older versions from `CHANGELOG.md`.
+
 ## 0.1.10
 
 - Publish GitHub Release notes from `CHANGELOG.md` instead of generic automated text.

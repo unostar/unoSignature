@@ -1,0 +1,48 @@
+name: Backfill release notes
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/backfill-release-notes.yml
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Update release notes from CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          updated=0
+          skipped=0
+
+          while IFS= read -r tag; do
+            version="${tag#v}"
+            notes_file="release-notes-${version}.md"
+            python3 scripts/extract-release-notes.py "$version" CHANGELOG.md > "$notes_file"
+
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release edit "$tag" --notes-file "$notes_file"
+              echo "Updated $tag"
+              updated=$((updated + 1))
+            else
+              echo "Skipped missing release $tag"
+              skipped=$((skipped + 1))
+            fi
+          done < <(git tag -l 'v0.1.*' | sort -V)
+
+          echo "Backfill complete: updated=$updated skipped=$skipped"
