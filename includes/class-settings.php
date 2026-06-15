@@ -222,6 +222,7 @@ final class Settings {
 			}
 
 			$map[] = [
+				'admin_label'     => sanitize_text_field((string) ($entry['admin_label'] ?? '')),
 				'categories'      => array_values(array_filter(array_map('sanitize_title', (array) ($entry['categories'] ?? [])))),
 				'product_ids'     => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['product_ids'] ?? []))))),
 				'excluded_ids'    => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['excluded_ids'] ?? []))))),
@@ -338,92 +339,99 @@ final class Settings {
 		$product_ids = array_map('absint', (array) ($row['product_ids'] ?? []));
 		$excluded_ids = array_map('absint', (array) ($row['excluded_ids'] ?? []));
 		$categories = array_map('sanitize_title', (array) ($row['categories'] ?? []));
+		$admin_label = (string) ($row['admin_label'] ?? '');
 		$agreement_group = (string) ($row['agreement_group'] ?? '');
 		$template_id = (string) ($row['template_id'] ?? '');
 		$rule_number = is_numeric($index) ? ((int) $index + 1) : 1;
 		$is_new_row = $index === '__INDEX__';
 		?>
-		<details class="unosignature-settings-panel unosignature-template-map-row"<?php echo $is_new_row ? ' open' : ''; ?>>
+		<details class="unosignature-template-map-row"<?php echo $is_new_row ? ' open' : ''; ?>>
 			<summary><?php echo esc_html(self::get_rule_summary_label($rule_number, $row)); ?></summary>
-			<table class="form-table" role="presentation">
-				<tr>
-					<th scope="row"><?php esc_html_e('Products', 'unosignature'); ?></th>
-					<td>
-						<select
-							class="wc-product-search"
-							multiple="multiple"
-							style="width: 100%;"
-							name="<?php echo esc_attr($name_prefix); ?>[product_ids][]"
-							data-placeholder="<?php esc_attr_e('Search for products…', 'unosignature'); ?>"
-							data-action="unosignature_search_products"
-							data-minimum_input_length="2"
-							data-allow_clear="true"
-						>
-							<?php foreach ($product_ids as $product_id) : ?>
-								<?php
-								$product = wc_get_product($product_id);
-								if (!$product) {
-									continue;
-								}
-								?>
-								<option value="<?php echo esc_attr((string) $product_id); ?>" selected="selected">
-									<?php echo esc_html(wp_strip_all_tags($product->get_formatted_name())); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e('Categories', 'unosignature'); ?></th>
-					<td>
-						<select
-							class="wc-enhanced-select"
-							multiple="multiple"
-							style="width: 100%;"
-							name="<?php echo esc_attr($name_prefix); ?>[categories][]"
-							data-placeholder="<?php esc_attr_e('Select categories…', 'unosignature'); ?>"
-						>
-							<?php foreach ($product_categories as $category) : ?>
-								<option
-									value="<?php echo esc_attr($category->slug); ?>"
-									<?php selected(in_array($category->slug, $categories, true)); ?>
-								>
-									<?php echo esc_html($category->name); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e('Excluded products', 'unosignature'); ?></th>
-					<td>
-						<select
-							class="wc-product-search"
-							multiple="multiple"
-							style="width: 100%;"
-							name="<?php echo esc_attr($name_prefix); ?>[excluded_ids][]"
-							data-placeholder="<?php esc_attr_e('Search for products…', 'unosignature'); ?>"
-							data-action="unosignature_search_products"
-							data-minimum_input_length="2"
-							data-allow_clear="true"
-						>
-							<?php foreach ($excluded_ids as $product_id) : ?>
-								<?php
-								$product = wc_get_product($product_id);
-								if (!$product) {
-									continue;
-								}
-								?>
-								<option value="<?php echo esc_attr((string) $product_id); ?>" selected="selected">
-									<?php echo esc_html(wp_strip_all_tags($product->get_formatted_name())); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e('Agreement group', 'unosignature'); ?></th>
-					<td>
+			<div class="unosignature-template-map-row__body">
+				<div class="unosignature-template-map-row__field">
+					<label><?php esc_html_e('Rule name', 'unosignature'); ?></label>
+					<input
+						class="regular-text unosignature-rule-label-input"
+						type="text"
+						name="<?php echo esc_attr($name_prefix); ?>[admin_label]"
+						value="<?php echo esc_attr($admin_label); ?>"
+						placeholder="<?php esc_attr_e('e.g. Paid consultation EN', 'unosignature'); ?>"
+					/>
+					<p class="description"><?php esc_html_e('Admin label only. Shown in the list above; not used on checkout.', 'unosignature'); ?></p>
+				</div>
+
+				<div class="unosignature-template-map-row__field">
+					<label><?php esc_html_e('Products', 'unosignature'); ?></label>
+					<select
+						class="wc-product-search"
+						multiple="multiple"
+						name="<?php echo esc_attr($name_prefix); ?>[product_ids][]"
+						data-placeholder="<?php esc_attr_e('Search for products…', 'unosignature'); ?>"
+						data-action="unosignature_search_products"
+						data-minimum_input_length="2"
+						data-allow_clear="true"
+					>
+						<?php foreach ($product_ids as $product_id) : ?>
+							<?php
+							$product = wc_get_product($product_id);
+							if (!$product) {
+								continue;
+							}
+							?>
+							<option value="<?php echo esc_attr((string) $product_id); ?>" selected="selected">
+								<?php echo esc_html(wp_strip_all_tags($product->get_formatted_name())); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+
+				<div class="unosignature-template-map-row__field">
+					<label><?php esc_html_e('Categories', 'unosignature'); ?></label>
+					<select
+						class="wc-enhanced-select"
+						multiple="multiple"
+						name="<?php echo esc_attr($name_prefix); ?>[categories][]"
+						data-placeholder="<?php esc_attr_e('Select categories…', 'unosignature'); ?>"
+					>
+						<?php foreach ($product_categories as $category) : ?>
+							<option
+								value="<?php echo esc_attr($category->slug); ?>"
+								<?php selected(in_array($category->slug, $categories, true)); ?>
+							>
+								<?php echo esc_html($category->name); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+
+				<div class="unosignature-template-map-row__field">
+					<label><?php esc_html_e('Excluded products', 'unosignature'); ?></label>
+					<select
+						class="wc-product-search"
+						multiple="multiple"
+						name="<?php echo esc_attr($name_prefix); ?>[excluded_ids][]"
+						data-placeholder="<?php esc_attr_e('Search for products…', 'unosignature'); ?>"
+						data-action="unosignature_search_products"
+						data-minimum_input_length="2"
+						data-allow_clear="true"
+					>
+						<?php foreach ($excluded_ids as $product_id) : ?>
+							<?php
+							$product = wc_get_product($product_id);
+							if (!$product) {
+								continue;
+							}
+							?>
+							<option value="<?php echo esc_attr((string) $product_id); ?>" selected="selected">
+								<?php echo esc_html(wp_strip_all_tags($product->get_formatted_name())); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+
+				<div class="unosignature-template-map-row__inline">
+					<div class="unosignature-template-map-row__field">
+						<label><?php esc_html_e('Agreement group', 'unosignature'); ?></label>
 						<input
 							class="regular-text"
 							type="text"
@@ -431,11 +439,9 @@ final class Settings {
 							value="<?php echo esc_attr($agreement_group); ?>"
 							placeholder="<?php esc_attr_e('e.g. paid_consultation', 'unosignature'); ?>"
 						/>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e('Firma template ID', 'unosignature'); ?></th>
-					<td>
+					</div>
+					<div class="unosignature-template-map-row__field">
+						<label><?php esc_html_e('Firma template ID', 'unosignature'); ?></label>
 						<input
 							class="regular-text"
 							type="text"
@@ -443,32 +449,26 @@ final class Settings {
 							value="<?php echo esc_attr($template_id); ?>"
 							placeholder="<?php esc_attr_e('Firma template ID', 'unosignature'); ?>"
 						/>
-					</td>
-				</tr>
-			</table>
-			<p>
-				<button type="button" class="button unosignature-remove-template-map-row">
-					<?php esc_html_e('Remove rule', 'unosignature'); ?>
-				</button>
-			</p>
+					</div>
+				</div>
+
+				<p class="unosignature-template-map-row__actions">
+					<button type="button" class="button unosignature-remove-template-map-row">
+						<?php esc_html_e('Remove rule', 'unosignature'); ?>
+					</button>
+				</p>
+			</div>
 		</details>
 		<?php
 	}
 
 	private static function get_rule_summary_label(int $rule_number, array $row): string {
-		$label = sprintf(__('Rule %d', 'unosignature'), $rule_number);
-		$agreement_group = sanitize_key((string) ($row['agreement_group'] ?? ''));
-		$template_id = sanitize_text_field((string) ($row['template_id'] ?? ''));
-
-		if ($agreement_group !== '') {
-			$label .= ' — ' . $agreement_group;
+		$admin_label = sanitize_text_field((string) ($row['admin_label'] ?? ''));
+		if ($admin_label !== '') {
+			return $admin_label;
 		}
 
-		if ($template_id !== '') {
-			$label .= ' — ' . $template_id;
-		}
-
-		return $label;
+		return sprintf(__('Rule %d', 'unosignature'), $rule_number);
 	}
 
 	private static function text_row(string $key, string $label, array $options, string $type = 'text', string $placeholder = ''): void {
@@ -497,7 +497,7 @@ final class Settings {
 		<style>
 			.unosignature-settings-panel {
 				margin: 1.5em 0;
-				max-width: 480px;
+				max-width: 960px;
 			}
 
 			.unosignature-settings-panel > summary {
@@ -523,29 +523,85 @@ final class Settings {
 			}
 
 			.unosignature-template-map {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
 				margin: 0;
 			}
 
-			.unosignature-template-map-row {
-				margin: 0 0 0.75em;
+			.unosignature-template-map-row > summary {
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: 600;
+				line-height: 1.4;
+				list-style: revert;
 			}
 
-			.unosignature-template-map-row .form-table th {
-				width: 160px;
-				padding-left: 0;
+			.unosignature-template-map-row[open] > summary {
+				margin-bottom: 8px;
 			}
 
-			.unosignature-template-map-row .form-table td {
-				padding-right: 0;
+			.unosignature-template-map-row__body {
+				border: 1px solid #c3c4c7;
+				border-radius: 4px;
+				background: #fff;
+				padding: 12px 14px;
 			}
 
-			.unosignature-template-map-empty {
-				margin: 0 0 1em;
+			.unosignature-template-map-row__field {
+				margin-bottom: 10px;
+			}
+
+			.unosignature-template-map-row__field:last-child {
+				margin-bottom: 0;
+			}
+
+			.unosignature-template-map-row__field > label {
+				display: block;
+				font-weight: 600;
+				font-size: 12px;
+				margin-bottom: 4px;
+				color: #1d2327;
+			}
+
+			.unosignature-template-map-row__field .description {
+				margin: 4px 0 0;
+			}
+
+			.unosignature-template-map-row__field .select2-container,
+			.unosignature-template-map-row__field .regular-text {
+				width: 100% !important;
+				max-width: 100%;
+				box-sizing: border-box;
+			}
+
+			.unosignature-template-map-row__inline {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 10px;
+			}
+
+			.unosignature-template-map-row__actions {
+				margin: 12px 0 0;
 			}
 
 			.unosignature-template-map-row .select2-selection--multiple .select2-selection__choice {
 				width: fit-content;
 				max-width: 100%;
+			}
+
+			.unosignature-template-map-empty {
+				margin: 0 0 1em;
+				padding: 10px 12px;
+				border: 1px dashed #c3c4c7;
+				border-radius: 4px;
+				background: #f6f7f7;
+			}
+
+			@media (max-width: 782px) {
+				.unosignature-template-map-row__inline {
+					grid-template-columns: 1fr;
+				}
 			}
 		</style>
 		<?php
