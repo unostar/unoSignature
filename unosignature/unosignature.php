@@ -3,7 +3,7 @@
  * Plugin Name: unoSignature
  * Plugin URI: https://unostar.dev/
  * Description: WordPress Universal Non-Opinionated Signature plugin.
- * Version: 0.1.7
+ * Version: 0.1.8
  * Author: unostar.dev
  * Author URI: https://unostar.dev/
  * Text Domain: unosignature
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-define('UNOSIGNATURE_VERSION', '0.1.7');
+define('UNOSIGNATURE_VERSION', '0.1.8');
 define('UNOSIGNATURE_FILE', __FILE__);
 define('UNOSIGNATURE_PATH', plugin_dir_path(__FILE__));
 define('UNOSIGNATURE_URL', plugin_dir_url(__FILE__));
