@@ -175,12 +175,18 @@ final class Settings {
 
 				<h2><?php esc_html_e('Signing agreement rules', 'unosignature'); ?></h2>
 				<p class="description">
-					<?php esc_html_e('Map WooCommerce products or categories to Firma templates. First matching rule wins.', 'unosignature'); ?>
+					<?php esc_html_e('Map WooCommerce products or categories to Firma templates. First matching rule wins. Rules without a template ID are ignored on save.', 'unosignature'); ?>
 				</p>
 				<div class="unosignature-template-map" id="unosignature-template-map">
-					<?php foreach ($template_map as $index => $row) : ?>
-						<?php self::render_template_map_row((int) $index, $row, $product_categories); ?>
-					<?php endforeach; ?>
+					<?php if (empty($template_map)) : ?>
+						<p class="unosignature-template-map-empty description">
+							<?php esc_html_e('No signing rules configured.', 'unosignature'); ?>
+						</p>
+					<?php else : ?>
+						<?php foreach ($template_map as $index => $row) : ?>
+							<?php self::render_template_map_row((int) $index, $row, $product_categories); ?>
+						<?php endforeach; ?>
+					<?php endif; ?>
 				</div>
 				<p class="unosignature-template-map-actions">
 					<button type="button" class="button" id="unosignature-add-template-map-row">
@@ -210,19 +216,11 @@ final class Settings {
 
 	private static function get_display_template_map(array $options): array {
 		$map = $options['template_map'] ?? [];
-		if (is_array($map) && !empty($map)) {
-			return $map;
+		if (!is_array($map)) {
+			return [];
 		}
 
-		return [
-			[
-				'product_ids'     => [],
-				'categories'      => [],
-				'excluded_ids'    => [],
-				'agreement_group' => '',
-				'template_id'     => '',
-			],
-		];
+		return $map;
 	}
 
 	/**
@@ -332,7 +330,6 @@ final class Settings {
 						name="<?php echo esc_attr($name_prefix); ?>[template_id]"
 						value="<?php echo esc_attr($template_id); ?>"
 						placeholder="<?php esc_attr_e('Firma template ID', 'unosignature'); ?>"
-						required
 					/>
 				</div>
 			</div>
@@ -383,6 +380,14 @@ final class Settings {
 
 			.unosignature-settings-panel > .description {
 				margin: 0 0 1em;
+			}
+
+			.unosignature-template-map-empty {
+				margin: 0;
+				padding: 10px 12px;
+				border: 1px dashed #c3c4c7;
+				border-radius: 4px;
+				background: #f6f7f7;
 			}
 
 			.unosignature-template-map {
