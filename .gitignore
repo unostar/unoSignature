@@ -2,7 +2,7 @@
 .agent.md
 .cursor/
 .vscode/
-assets/
+/assets/
 composer.json
 composer.lock
 esignature-current.php

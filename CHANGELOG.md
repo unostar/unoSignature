@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.7
+
+- Moved signing agreement rules (products, categories, templates) to Settings → unoSignature admin UI.
+- Replaced hardcoded template map with configurable repeater using WooCommerce product search.
+
 ## 0.1.6
 
 - Added Firma test API key and test mode toggle in plugin settings.

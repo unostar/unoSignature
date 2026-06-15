@@ -19,8 +19,6 @@ final class Config {
 		'firma_test_api_key'            => 'FIRMA_TEST_API_KEY',
 		'firma_webhook_secret'          => 'FIRMA_WEBHOOK_SECRET',
 		'firma_owner_copy_email'        => 'FIRMA_OWNER_COPY_EMAIL',
-		'paid_consultation_en'          => 'PAID_CONSULTATION_EN',
-		'paid_consultation_ru_en'       => 'PAID_CONSULTATION_RU_EN',
 		'firma_debug'                   => 'FIRMA_DEBUG',
 		'github_repo'                   => 'UNOSIGNATURE_GITHUB_REPO',
 		'github_token'                  => 'UNOSIGNATURE_GITHUB_TOKEN',
@@ -66,6 +64,72 @@ final class Config {
 		}
 
 		return (string) self::get('firma_api_key', '');
+	}
+
+	/**
+	 * Agreement rules: which products/categories require signing and which Firma template to use.
+	 * First matching row wins; order is significant.
+	 */
+	public static function get_template_map(): array {
+		$map = self::get_option_value('template_map');
+		if (is_array($map) && !empty($map)) {
+			return self::normalize_template_map($map);
+		}
+
+		return self::legacy_default_template_map();
+	}
+
+	private static function normalize_template_map(array $map): array {
+		$normalized = [];
+
+		foreach ($map as $entry) {
+			if (!is_array($entry)) {
+				continue;
+			}
+
+			$template_id = sanitize_text_field((string) ($entry['template_id'] ?? ''));
+			if ($template_id === '') {
+				continue;
+			}
+
+			$normalized[] = [
+				'categories'      => array_values(array_filter(array_map('sanitize_title', (array) ($entry['categories'] ?? [])))),
+				'product_ids'     => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['product_ids'] ?? []))))),
+				'excluded_ids'    => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['excluded_ids'] ?? []))))),
+				'agreement_group' => sanitize_key((string) ($entry['agreement_group'] ?? '')),
+				'template_id'     => $template_id,
+			];
+		}
+
+		return $normalized;
+	}
+
+	private static function legacy_default_template_map(): array {
+		$en_template = (string) self::get_option_value('paid_consultation_en');
+		$ru_template = (string) self::get_option_value('paid_consultation_ru_en');
+		$map = [];
+
+		if ($en_template !== '') {
+			$map[] = [
+				'categories'      => [],
+				'product_ids'     => [20203, 20047],
+				'excluded_ids'    => [],
+				'agreement_group' => 'paid_consultation',
+				'template_id'     => $en_template,
+			];
+		}
+
+		if ($ru_template !== '') {
+			$map[] = [
+				'categories'      => [],
+				'product_ids'     => [19741, 20202],
+				'excluded_ids'    => [],
+				'agreement_group' => 'paid_consultation',
+				'template_id'     => $ru_template,
+			];
+		}
+
+		return $map;
 	}
 
 	public static function maybe_define_legacy_constants(): void {
