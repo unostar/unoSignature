@@ -17,6 +17,7 @@ final class Updater {
 	public static function init(): void {
 		add_filter('pre_set_site_transient_update_plugins', [self::class, 'check_for_update']);
 		add_filter('plugins_api', [self::class, 'plugin_info'], 10, 3);
+		add_filter('plugin_row_meta', [self::class, 'plugin_row_meta'], 10, 2);
 		add_filter('upgrader_pre_download', [self::class, 'download_private_asset'], 10, 4);
 	}
 
@@ -53,9 +54,6 @@ final class Updater {
 		}
 
 		$release = self::latest_release();
-		if (!$release) {
-			return $result;
-		}
 
 		return (object) [
 			'name'          => 'unoSignature',
@@ -68,10 +66,62 @@ final class Updater {
 			'requires'      => '6.0',
 			'requires_php'  => '7.4',
 			'sections'      => [
-				'description' => '<p>WooCommerce checkout e-signature integration powered by Firma.</p>',
+				'description' => self::plugin_description_html(),
 				'changelog'   => Changelog::get_html() ?: wp_kses_post((string) ($release['body'] ?? '')),
 			],
 		];
+	}
+
+	public static function plugin_row_meta(array $links, string $file): array {
+		if ($file !== UNOSIGNATURE_BASENAME) {
+			return $links;
+		}
+
+		$links[] = sprintf(
+			'<a href="%1$s" class="thickbox open-plugin-details-modal" aria-label="%2$s" data-title="%3$s">%4$s</a>',
+			esc_url(
+				network_admin_url(
+					'plugin-install.php?tab=plugin-information&plugin=unosignature&TB_iframe=true&width=772&height=537'
+				)
+			),
+			esc_attr(sprintf(
+				/* translators: %s: plugin name */
+				__('More information about %s', 'unosignature'),
+				'unoSignature'
+			)),
+			esc_attr('unoSignature'),
+			esc_html__('View details', 'unosignature')
+		);
+
+		return $links;
+	}
+
+	private static function plugin_description_html(): string {
+		$firma_url = 'https://firma.dev/';
+		$author_url = 'https://unostar.dev/';
+
+		return implode('', [
+			'<p>',
+			sprintf(
+				/* translators: %s: firma.dev homepage URL */
+				__('unoSignature is a WordPress integration layer for the <a href="%s">firma.dev</a> e-signature API.', 'unosignature'),
+				esc_url($firma_url)
+			),
+			'</p>',
+			'<p>',
+			esc_html__('Configure contract templates, signing fields, and agreement rules in the admin. Contract content can be filled dynamically when a signing request is created.', 'unosignature'),
+			'</p>',
+			'<p>',
+			esc_html__('The plugin is contract-agnostic: one setup can cover consultations, services, NDAs, and other agreement types. WooCommerce checkout is included as a ready-made integration, not a platform limit.', 'unosignature'),
+			'</p>',
+			'<p>',
+			sprintf(
+				/* translators: %s: author homepage URL */
+				__('Developed and maintained by <a href="%s">unostar.dev</a>.', 'unosignature'),
+				esc_url($author_url)
+			),
+			'</p>',
+		]);
 	}
 
 	public static function download_private_asset($reply, string $package, $upgrader, array $hook_extra = []) {
