@@ -67,33 +67,46 @@
 		});
 	}
 
+	function getRuleSummaryLabel($row, ruleNumber) {
+		var label = 'Rule ' + ruleNumber;
+		var agreementGroup = $.trim($row.find('[name*="[agreement_group]"]').val() || '');
+		var templateId = $.trim($row.find('[name*="[template_id]"]').val() || '');
+
+		if (agreementGroup) {
+			label += ' — ' + agreementGroup;
+		}
+
+		if (templateId) {
+			label += ' — ' + templateId;
+		}
+
+		return label;
+	}
+
 	function reindexTemplateMapRows() {
 		var optionKey = window.unosignatureSettings?.optionKey || 'unosignature_settings';
 
 		$('#unosignature-template-map .unosignature-template-map-row').each(function (index) {
 			var ruleNumber = index + 1;
+			var $row = $(this);
 
-			$(this)
-				.find('.unosignature-template-map-row__header strong')
-				.text('Rule ' + ruleNumber);
+			$row.children('summary').first().text(getRuleSummaryLabel($row, ruleNumber));
 
-			$(this)
-				.find('[name]')
-				.each(function () {
-					var name = $(this).attr('name');
+			$row.find('[name]').each(function () {
+				var name = $(this).attr('name');
 
-					if (!name) {
-						return;
-					}
+				if (!name) {
+					return;
+				}
 
-					$(this).attr(
-						'name',
-						name.replace(
-							new RegExp(optionKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\[template_map\\]\\[[^\\]]+\\]'),
-							optionKey + '[template_map][' + index + ']'
-						)
-					);
-				});
+				$(this).attr(
+					'name',
+					name.replace(
+						new RegExp(optionKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\[template_map\\]\\[[^\\]]+\\]'),
+						optionKey + '[template_map][' + index + ']'
+					)
+				);
+			});
 		});
 	}
 
@@ -122,6 +135,13 @@
 		}
 
 		initEnhancedSelects($container);
+
+		$container.on('input', '[name*="[agreement_group]"], [name*="[template_id]"]', function () {
+			var $row = $(this).closest('.unosignature-template-map-row');
+			var index = $container.find('.unosignature-template-map-row').index($row);
+
+			$row.children('summary').first().text(getRuleSummaryLabel($row, index + 1));
+		});
 
 		$('#unosignature-add-template-map-row').on('click', function () {
 			var index = $container.find('.unosignature-template-map-row').length;
