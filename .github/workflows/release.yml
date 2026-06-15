@@ -42,6 +42,7 @@ jobs:
 
       - name: Build plugin zip
         run: |
+          cp CHANGELOG.md unosignature/CHANGELOG.md
           rm -f unosignature.zip
           zip -r unosignature.zip unosignature \
             -x "*/.DS_Store" \

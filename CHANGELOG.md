@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.15
+
+- Move Firma debug and test mode settings below signing agreement rules.
+- Render plugin update changelog in standard WordPress HTML format from CHANGELOG.md.
+
 ## 0.1.14
 
 - Restore white card layout for signing rules with collapsible details panels.

@@ -25,6 +25,7 @@ define('UNOSIGNATURE_URL', plugin_dir_url(__FILE__));
 define('UNOSIGNATURE_BASENAME', plugin_basename(__FILE__));
 
 require_once UNOSIGNATURE_PATH . 'includes/class-config.php';
+require_once UNOSIGNATURE_PATH . 'includes/class-changelog.php';
 require_once UNOSIGNATURE_PATH . 'includes/class-settings.php';
 require_once UNOSIGNATURE_PATH . 'includes/class-updater.php';
 require_once UNOSIGNATURE_PATH . 'includes/class-plugin.php';

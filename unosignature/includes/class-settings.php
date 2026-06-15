@@ -258,26 +258,8 @@ final class Settings {
 				<table class="form-table" role="presentation">
 					<?php self::text_row('firma_api_key', 'Firma API key (live)', $options, 'password', !empty($options['firma_api_key']) ? 'Key is saved; leave blank to keep it' : ''); ?>
 					<?php self::text_row('firma_test_api_key', 'Firma API key (test)', $options, 'password', !empty($options['firma_test_api_key']) ? 'Key is saved; leave blank to keep it' : ''); ?>
-					<tr>
-						<th scope="row">Firma test mode</th>
-						<td>
-							<label>
-								<input type="checkbox" name="<?php echo esc_attr(Config::OPTION_KEY); ?>[firma_use_test_key]" value="1" <?php checked(!empty($options['firma_use_test_key'])); ?> />
-								<?php esc_html_e('Use test API key (no live credits; watermarked signing requests)', 'unosignature'); ?>
-							</label>
-						</td>
-					</tr>
 					<?php self::text_row('firma_webhook_secret', 'Firma webhook secret', $options, 'password', !empty($options['firma_webhook_secret']) ? 'Secret is saved; leave blank to keep it' : ''); ?>
 					<?php self::text_row('firma_owner_copy_email', 'Owner copy email', $options, 'email'); ?>
-					<tr>
-						<th scope="row">Firma debug</th>
-						<td>
-							<label>
-								<input type="checkbox" name="<?php echo esc_attr(Config::OPTION_KEY); ?>[firma_debug]" value="1" <?php checked(!empty($options['firma_debug'])); ?> />
-								Enable debug logging
-							</label>
-						</td>
-					</tr>
 				</table>
 
 				<h2><?php esc_html_e('Signing agreement rules', 'unosignature'); ?></h2>
@@ -300,6 +282,27 @@ final class Settings {
 						<?php esc_html_e('Add rule', 'unosignature'); ?>
 					</button>
 				</p>
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row">Firma debug</th>
+						<td>
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr(Config::OPTION_KEY); ?>[firma_debug]" value="1" <?php checked(!empty($options['firma_debug'])); ?> />
+								Enable debug logging
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">Firma test mode</th>
+						<td>
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr(Config::OPTION_KEY); ?>[firma_use_test_key]" value="1" <?php checked(!empty($options['firma_use_test_key'])); ?> />
+								<?php esc_html_e('Use test API key (no live credits; watermarked signing requests)', 'unosignature'); ?>
+							</label>
+						</td>
+					</tr>
+				</table>
 
 				<details class="unosignature-settings-panel">
 					<summary><?php esc_html_e('Plugin updates (GitHub)', 'unosignature'); ?></summary>
