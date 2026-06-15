@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.13
+
+- Rework signing agreement rules UI with native WP details panels and form-table layout.
+- Narrow settings block to 480px and use standard buttons with fit-content select2 tags.
+
 ## 0.1.11
 
 - Fix product search in signing agreement rules with substring, SKU, and ID matching.
