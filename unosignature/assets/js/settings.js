@@ -79,6 +79,22 @@
 		});
 	}
 
+	function toggleEmptyState($container) {
+		var $empty = $container.find('.unosignature-template-map-empty');
+		var hasRows = $container.find('.unosignature-template-map-row').length > 0;
+
+		if (hasRows) {
+			$empty.remove();
+			return;
+		}
+
+		if (!$empty.length) {
+			$container.append(
+				'<p class="unosignature-template-map-empty description">No signing rules configured.</p>'
+			);
+		}
+	}
+
 	$(function () {
 		var $container = $('#unosignature-template-map');
 		var $template = $('#unosignature-template-map-row-template');
@@ -95,21 +111,15 @@
 			var $row = $(html);
 
 			$container.append($row);
+			toggleEmptyState($container);
 			reindexTemplateMapRows();
 			initEnhancedSelects($row);
 		});
 
 		$container.on('click', '.unosignature-remove-template-map-row', function () {
-			var $rows = $container.find('.unosignature-template-map-row');
-
-			if ($rows.length <= 1) {
-				$rows.first().find('select').val(null).trigger('change');
-				$rows.first().find('input[type="text"]').val('');
-				return;
-			}
-
 			$(this).closest('.unosignature-template-map-row').remove();
 			reindexTemplateMapRows();
+			toggleEmptyState($container);
 		});
 	});
 })(jQuery);

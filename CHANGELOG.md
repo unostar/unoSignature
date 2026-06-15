@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.9
+
+- Allow saving an empty signing rules list and fully removing the last rule.
+- Drop browser-required validation on template ID; empty rows are ignored on save.
+
 ## 0.1.8
 
 - Redesigned signing agreement rules UI as compact vertical cards.
