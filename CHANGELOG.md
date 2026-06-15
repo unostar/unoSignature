@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.16
+
+- Add View details link on the Plugins screen with standard WordPress plugin information modal.
+- Rewrite plugin description to reflect firma.dev API integration and configurable contract workflows.
+
 ## 0.1.15
 
 - Move Firma debug and test mode settings below signing agreement rules.

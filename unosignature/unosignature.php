@@ -2,7 +2,7 @@
 /**
  * Plugin Name: unoSignature
  * Plugin URI: https://unostar.dev/
- * Description: WordPress Universal Non-Opinionated Signature plugin.
+ * Description: WordPress integration for the firma.dev e-signature API — configurable contracts, signing fields, and dynamic document content.
  * Version: 0.1.15
  * Author: unostar.dev
  * Author URI: https://unostar.dev/
