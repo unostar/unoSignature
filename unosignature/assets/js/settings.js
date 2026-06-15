@@ -68,19 +68,13 @@
 	}
 
 	function getRuleSummaryLabel($row, ruleNumber) {
-		var label = 'Rule ' + ruleNumber;
-		var agreementGroup = $.trim($row.find('[name*="[agreement_group]"]').val() || '');
-		var templateId = $.trim($row.find('[name*="[template_id]"]').val() || '');
+		var adminLabel = $.trim($row.find('[name*="[admin_label]"]').val() || '');
 
-		if (agreementGroup) {
-			label += ' — ' + agreementGroup;
+		if (adminLabel) {
+			return adminLabel;
 		}
 
-		if (templateId) {
-			label += ' — ' + templateId;
-		}
-
-		return label;
+		return 'Rule ' + ruleNumber;
 	}
 
 	function reindexTemplateMapRows() {
@@ -136,7 +130,7 @@
 
 		initEnhancedSelects($container);
 
-		$container.on('input', '[name*="[agreement_group]"], [name*="[template_id]"]', function () {
+		$container.on('input', '.unosignature-rule-label-input', function () {
 			var $row = $(this).closest('.unosignature-template-map-row');
 			var index = $container.find('.unosignature-template-map-row').index($row);
 

@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.14
+
+- Restore white card layout for signing rules with collapsible details panels.
+- Add admin-only rule name field for clearer rule identification in settings.
+
 ## 0.1.13
 
 - Rework signing agreement rules UI with native WP details panels and form-table layout.

@@ -102,6 +102,7 @@ final class Config {
 			}
 
 			$normalized[] = [
+				'admin_label'     => sanitize_text_field((string) ($entry['admin_label'] ?? '')),
 				'categories'      => array_values(array_filter(array_map('sanitize_title', (array) ($entry['categories'] ?? [])))),
 				'product_ids'     => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['product_ids'] ?? []))))),
 				'excluded_ids'    => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['excluded_ids'] ?? []))))),
