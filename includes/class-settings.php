@@ -17,6 +17,7 @@ final class Settings {
 		add_action('admin_init', [self::class, 'register']);
 		add_action('admin_enqueue_scripts', [self::class, 'enqueue_admin_assets']);
 		add_action('admin_head-settings_page_unosignature', [self::class, 'admin_styles']);
+		add_action('wp_ajax_unosignature_search_products', [self::class, 'ajax_search_products']);
 	}
 
 	public static function add_page(): void {
@@ -57,7 +58,112 @@ final class Settings {
 		);
 		wp_localize_script('unosignature-settings', 'unosignatureSettings', [
 			'optionKey' => Config::OPTION_KEY,
+			'productSearchAction' => 'unosignature_search_products',
 		]);
+	}
+
+	public static function ajax_search_products(): void {
+		check_ajax_referer('search-products', 'security');
+
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(null, 403);
+		}
+
+		$term = isset($_GET['term']) ? wc_clean(wp_unslash((string) $_GET['term'])) : '';
+		if ($term === '') {
+			wp_send_json([]);
+		}
+
+		wp_send_json(self::search_products_for_settings($term));
+	}
+
+	private static function search_products_for_settings(string $term): array {
+		global $wpdb;
+
+		$limit = (int) apply_filters('unosignature_settings_product_search_limit', 30);
+		$statuses = current_user_can('edit_private_products') ? ['publish', 'private'] : ['publish'];
+		$products = [];
+
+		$ids = self::query_product_ids_by_phrase($term, $statuses, $limit);
+		if (empty($ids)) {
+			$ids = self::query_product_ids_by_words($term, $statuses, $limit);
+		}
+
+		if (empty($ids) && ctype_digit($term)) {
+			$product = wc_get_product((int) $term);
+			if ($product && in_array($product->get_status(), $statuses, true)) {
+				$ids = [(int) $term];
+			}
+		}
+
+		foreach ($ids as $product_id) {
+			$product = wc_get_product((int) $product_id);
+			if (!$product) {
+				continue;
+			}
+
+			$products[$product->get_id()] = rawurldecode(wp_strip_all_tags($product->get_formatted_name()));
+		}
+
+		return apply_filters('unosignature_settings_found_products', $products, $term);
+	}
+
+	private static function query_product_ids_by_phrase(string $term, array $statuses, int $limit): array {
+		global $wpdb;
+
+		$like = '%' . $wpdb->esc_like($term) . '%';
+		$status_placeholders = implode(', ', array_fill(0, count($statuses), '%s'));
+		$sql = "
+			SELECT DISTINCT p.ID
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->wc_product_meta_lookup} lookup ON lookup.product_id = p.ID
+			WHERE p.post_type = 'product'
+			AND p.post_status IN ($status_placeholders)
+			AND (
+				p.post_title LIKE %s
+				OR lookup.sku LIKE %s
+			)
+			ORDER BY p.post_title ASC
+			LIMIT %d
+		";
+
+		$prepare_args = array_merge($statuses, [$like, $like, $limit]);
+
+		return array_map('intval', (array) $wpdb->get_col($wpdb->prepare($sql, ...$prepare_args)));
+	}
+
+	private static function query_product_ids_by_words(string $term, array $statuses, int $limit): array {
+		global $wpdb;
+
+		$words = preg_split('/\s+/u', $term, -1, PREG_SPLIT_NO_EMPTY);
+		if (!$words || count($words) < 2) {
+			return [];
+		}
+
+		$status_placeholders = implode(', ', array_fill(0, count($statuses), '%s'));
+		$word_conditions = [];
+		$prepare_args = $statuses;
+
+		foreach ($words as $word) {
+			$like = '%' . $wpdb->esc_like($word) . '%';
+			$word_conditions[] = '(p.post_title LIKE %s OR lookup.sku LIKE %s)';
+			$prepare_args[] = $like;
+			$prepare_args[] = $like;
+		}
+
+		$prepare_args[] = $limit;
+		$sql = "
+			SELECT DISTINCT p.ID
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->wc_product_meta_lookup} lookup ON lookup.product_id = p.ID
+			WHERE p.post_type = 'product'
+			AND p.post_status IN ($status_placeholders)
+			AND (" . implode(' OR ', $word_conditions) . ")
+			ORDER BY p.post_title ASC
+			LIMIT %d
+		";
+
+		return array_map('intval', (array) $wpdb->get_col($wpdb->prepare($sql, ...$prepare_args)));
 	}
 
 	public static function sanitize($input): array {
@@ -251,7 +357,8 @@ final class Settings {
 					multiple="multiple"
 					name="<?php echo esc_attr($name_prefix); ?>[product_ids][]"
 					data-placeholder="<?php esc_attr_e('Search for products…', 'unosignature'); ?>"
-					data-action="woocommerce_json_search_products_and_variations"
+					data-action="unosignature_search_products"
+					data-minimum_input_length="2"
 					data-allow_clear="true"
 				>
 					<?php foreach ($product_ids as $product_id) : ?>
@@ -294,7 +401,8 @@ final class Settings {
 					multiple="multiple"
 					name="<?php echo esc_attr($name_prefix); ?>[excluded_ids][]"
 					data-placeholder="<?php esc_attr_e('Search for products…', 'unosignature'); ?>"
-					data-action="woocommerce_json_search_products_and_variations"
+					data-action="unosignature_search_products"
+					data-minimum_input_length="2"
 					data-allow_clear="true"
 				>
 					<?php foreach ($excluded_ids as $product_id) : ?>
@@ -434,6 +542,19 @@ final class Settings {
 				width: 100% !important;
 				max-width: 100%;
 				box-sizing: border-box;
+			}
+
+			.unosignature-template-map-row .select2-selection--multiple .select2-selection__rendered {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 4px;
+			}
+
+			.unosignature-template-map-row .select2-selection--multiple .select2-selection__choice {
+				float: none;
+				max-width: 100%;
+				white-space: normal;
+				word-break: break-word;
 			}
 
 			.unosignature-template-map-row__inline {

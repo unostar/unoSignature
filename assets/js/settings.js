@@ -2,29 +2,26 @@
 	'use strict';
 
 	function initEnhancedSelects($context) {
-		$context.find('.wc-product-search, .wc-enhanced-select').filter(':not(.enhanced)').each(function () {
+		$context.find('.wc-product-search').filter(':not(.enhanced)').each(function () {
 			var $select = $(this);
-			var isProductSearch = $select.hasClass('wc-product-search');
+			var searchAction = window.unosignatureSettings?.productSearchAction || 'unosignature_search_products';
 			var selectArgs = {
 				allowClear: $select.data('allow_clear') ? true : false,
 				placeholder: $select.data('placeholder') || '',
-				minimumInputLength: isProductSearch ? 3 : 0,
+				minimumInputLength: $select.data('minimum_input_length') ? parseInt($select.data('minimum_input_length'), 10) : 2,
 				width: '100%',
 				escapeMarkup: function (markup) {
 					return markup;
-				}
-			};
-
-			if (isProductSearch && window.wc_enhanced_select_params) {
-				selectArgs.ajax = {
-					url: window.wc_enhanced_select_params.ajax_url,
+				},
+				ajax: {
+					url: window.wc_enhanced_select_params?.ajax_url || window.ajaxurl,
 					dataType: 'json',
 					delay: 250,
 					data: function (params) {
 						return {
 							term: params.term,
-							action: $select.data('action') || 'woocommerce_json_search_products_and_variations',
-							security: window.wc_enhanced_select_params.search_products_nonce
+							action: searchAction,
+							security: window.wc_enhanced_select_params?.search_products_nonce || ''
 						};
 					},
 					processResults: function (data) {
@@ -42,10 +39,31 @@
 						return { results: results };
 					},
 					cache: true
+				}
+			};
+
+			if (window.wc_enhanced_select_params) {
+				selectArgs.language = {
+					noResults: function () {
+						return wc_enhanced_select_params.i18n_no_matches;
+					},
+					searching: function () {
+						return wc_enhanced_select_params.i18n_searching;
+					}
 				};
 			}
 
 			$select.selectWoo(selectArgs).addClass('enhanced');
+		});
+
+		$context.find('.wc-enhanced-select').filter(':not(.enhanced)').each(function () {
+			var $select = $(this);
+			$select.selectWoo({
+				allowClear: false,
+				placeholder: $select.data('placeholder') || '',
+				minimumResultsForSearch: 10,
+				width: '100%'
+			}).addClass('enhanced');
 		});
 	}
 
