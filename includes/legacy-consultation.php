@@ -57,34 +57,11 @@ function uno_get_firma_api_key(): string {
 // =========================================================================
 
 /**
- * Defines which product categories / IDs require a signing agreement
- * and maps each to its Firma template_id.
- *
- * To add a new agreement type, append an entry:
- *   'categories'   => WooCommerce product category slugs
- *   'product_ids'  => explicit product IDs (overrides category check)
- *   'excluded_ids' => product IDs exempt even if category matches
- *   'agreement_group' => logical contract group (same legal agreement across templates)
- *   'template_id'  => Firma template constant for this agreement type
+ * Agreement rules from plugin settings (Settings → unoSignature).
  */
 function uno_get_template_map()
 {
-	return [
-		[
-			'categories'   => [],
-			'product_ids'  => [20203,20047],
-			'excluded_ids' => [],
-			'agreement_group' => 'paid_consultation',
-			'template_id'  => defined('PAID_CONSULTATION_EN') ? constant('PAID_CONSULTATION_EN') : null,
-		],
-		[
-			'categories'   => [],
-			'product_ids'  => [19741,20202],
-			'excluded_ids' => [],
-			'agreement_group' => 'paid_consultation',
-			'template_id'  => defined('PAID_CONSULTATION_RU_EN') ? constant('PAID_CONSULTATION_RU_EN') : null,
-		],
-	];
+	return \UnoSignature\Config::get_template_map();
 }
 
 /**
