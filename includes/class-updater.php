@@ -64,9 +64,12 @@ final class Updater {
 			'author'        => '<a href="https://unostar.dev/">unostar.dev</a>',
 			'homepage'      => 'https://unostar.dev/',
 			'download_link' => (string) ($release['asset_url'] ?? ''),
+			'tested'        => get_bloginfo('version'),
+			'requires'      => '6.0',
+			'requires_php'  => '7.4',
 			'sections'      => [
-				'description' => 'WooCommerce checkout e-signature integration for unoSignature.',
-				'changelog'   => wp_kses_post((string) ($release['body'] ?? '')),
+				'description' => '<p>WooCommerce checkout e-signature integration powered by Firma.</p>',
+				'changelog'   => Changelog::get_html() ?: wp_kses_post((string) ($release['body'] ?? '')),
 			],
 		];
 	}
