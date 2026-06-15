@@ -9,6 +9,7 @@
 				allowClear: $select.data('allow_clear') ? true : false,
 				placeholder: $select.data('placeholder') || '',
 				minimumInputLength: isProductSearch ? 3 : 0,
+				width: '100%',
 				escapeMarkup: function (markup) {
 					return markup;
 				}
@@ -51,7 +52,13 @@
 	function reindexTemplateMapRows() {
 		var optionKey = window.unosignatureSettings?.optionKey || 'unosignature_settings';
 
-		$('#unosignature-template-map tbody .unosignature-template-map-row').each(function (index) {
+		$('#unosignature-template-map .unosignature-template-map-row').each(function (index) {
+			var ruleNumber = index + 1;
+
+			$(this)
+				.find('.unosignature-template-map-row__header strong')
+				.text('Rule ' + ruleNumber);
+
 			$(this)
 				.find('[name]')
 				.each(function () {
@@ -73,26 +80,27 @@
 	}
 
 	$(function () {
-		var $table = $('#unosignature-template-map');
+		var $container = $('#unosignature-template-map');
 		var $template = $('#unosignature-template-map-row-template');
 
-		if (!$table.length || !$template.length) {
+		if (!$container.length || !$template.length) {
 			return;
 		}
 
-		initEnhancedSelects($table);
+		initEnhancedSelects($container);
 
 		$('#unosignature-add-template-map-row').on('click', function () {
-			var index = $table.find('tbody .unosignature-template-map-row').length;
+			var index = $container.find('.unosignature-template-map-row').length;
 			var html = $template.html().replace(/__INDEX__/g, String(index));
 			var $row = $(html);
 
-			$table.find('tbody').append($row);
+			$container.append($row);
+			reindexTemplateMapRows();
 			initEnhancedSelects($row);
 		});
 
-		$table.on('click', '.unosignature-remove-template-map-row', function () {
-			var $rows = $table.find('tbody .unosignature-template-map-row');
+		$container.on('click', '.unosignature-remove-template-map-row', function () {
+			var $rows = $container.find('.unosignature-template-map-row');
 
 			if ($rows.length <= 1) {
 				$rows.first().find('select').val(null).trigger('change');

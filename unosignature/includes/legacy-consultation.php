@@ -20,7 +20,9 @@ if (!function_exists('uno_debug')) {
 	 */
 	function uno_debug($payload, bool $force = false)
 	{
-		$enabled = defined('FIRMA_DEBUG') ? constant('FIRMA_DEBUG') : false;
+		$enabled = class_exists('\UnoSignature\Config')
+			? \UnoSignature\Config::is_debug_enabled()
+			: false;
 
 		if (!$force && !$enabled) return;
 
@@ -37,19 +39,7 @@ if (!function_exists('uno_debug')) {
  * Returns the active Firma API key (test or live).
  */
 function uno_get_firma_api_key(): string {
-	if (class_exists('\UnoSignature\Config')) {
-		return \UnoSignature\Config::get_firma_api_key();
-	}
-
-	if (defined('FIRMA_USE_TEST_KEY') && constant('FIRMA_USE_TEST_KEY') && defined('FIRMA_TEST_API_KEY')) {
-		return (string) constant('FIRMA_TEST_API_KEY');
-	}
-
-	if (defined('FIRMA_API_KEY')) {
-		return (string) constant('FIRMA_API_KEY');
-	}
-
-	return '';
+	return \UnoSignature\Config::get_firma_api_key();
 }
 
 // =========================================================================
@@ -1122,7 +1112,7 @@ function uno_process_certificate_generated_owner_copy(array $event_data)
 {
 	$request_id = $event_data['signing_request']['id'] ?? '';
 	$api_key = uno_get_firma_api_key();
-	$owner_email = defined('FIRMA_OWNER_COPY_EMAIL') ? constant('FIRMA_OWNER_COPY_EMAIL') : '';
+	$owner_email = (string) \UnoSignature\Config::get('firma_owner_copy_email', '');
 
 	if (!$request_id || !$api_key || !$owner_email) {
 		uno_debug([
@@ -1497,7 +1487,7 @@ add_action('rest_api_init', function () {
 		'permission_callback' => function (WP_REST_Request $req) {
 			$raw_body = $req->get_body();
 			$signature_header = $req->get_header('X-Firma-Signature');
-			$secret = defined('FIRMA_WEBHOOK_SECRET') ? constant('FIRMA_WEBHOOK_SECRET') : '';
+			$secret = (string) \UnoSignature\Config::get('firma_webhook_secret', '');
 			uno_debug([
 				'scope' => 'webhook_permission',
 				'step' => 'start',

@@ -2,6 +2,13 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.8
+
+- Redesigned signing agreement rules UI as compact vertical cards.
+- Removed hardcoded legacy defaults; all configuration now comes from plugin settings.
+- Added wp-config.php constant overrides with priority over saved options.
+- Migrated old flat template ID settings into template_map rows on upgrade.
+
 ## 0.1.7
 
 - Moved signing agreement rules (products, categories, templates) to Settings → unoSignature admin UI.

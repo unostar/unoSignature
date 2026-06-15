@@ -17,13 +17,12 @@ final class Plugin {
 
 		Settings::init();
 		Updater::init();
+		Config::init();
 
 		if (!class_exists('WooCommerce')) {
 			add_action('admin_notices', [self::class, 'woocommerce_missing_notice']);
 			return;
 		}
-
-		Config::maybe_define_legacy_constants();
 
 		require_once UNOSIGNATURE_PATH . 'includes/legacy-consultation.php';
 	}

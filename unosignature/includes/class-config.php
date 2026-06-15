@@ -2,6 +2,9 @@
 /**
  * Configuration access for unoSignature.
  *
+ * Settings are stored in wp_options under Config::OPTION_KEY.
+ * wp-config.php constants override stored values when defined.
+ *
  * @package UnoSignature
  */
 
@@ -14,23 +17,30 @@ if (!defined('ABSPATH')) {
 final class Config {
 	public const OPTION_KEY = 'unosignature_settings';
 
-	private const CONSTANTS = [
-		'firma_api_key'                 => 'FIRMA_API_KEY',
-		'firma_test_api_key'            => 'FIRMA_TEST_API_KEY',
-		'firma_webhook_secret'          => 'FIRMA_WEBHOOK_SECRET',
-		'firma_owner_copy_email'        => 'FIRMA_OWNER_COPY_EMAIL',
-		'firma_debug'                   => 'FIRMA_DEBUG',
-		'github_repo'                   => 'UNOSIGNATURE_GITHUB_REPO',
-		'github_token'                  => 'UNOSIGNATURE_GITHUB_TOKEN',
-		'github_release_asset'          => 'UNOSIGNATURE_GITHUB_RELEASE_ASSET',
+	/**
+	 * Optional wp-config.php overrides. When defined, these take priority over Settings.
+	 */
+	private const WP_CONFIG_OVERRIDES = [
+		'firma_api_key'            => 'FIRMA_API_KEY',
+		'firma_test_api_key'       => 'FIRMA_TEST_API_KEY',
+		'firma_webhook_secret'     => 'FIRMA_WEBHOOK_SECRET',
+		'firma_owner_copy_email'   => 'FIRMA_OWNER_COPY_EMAIL',
+		'firma_debug'              => 'FIRMA_DEBUG',
+		'github_repo'              => 'UNOSIGNATURE_GITHUB_REPO',
+		'github_token'             => 'UNOSIGNATURE_GITHUB_TOKEN',
+		'github_release_asset'     => 'UNOSIGNATURE_GITHUB_RELEASE_ASSET',
 	];
+
+	public static function init(): void {
+		self::maybe_migrate_options();
+	}
 
 	public static function get(string $key, $default = '') {
 		if ($key === 'firma_use_test_key') {
 			return self::use_test_api_key() ? '1' : '';
 		}
 
-		$constant = self::CONSTANTS[$key] ?? '';
+		$constant = self::WP_CONFIG_OVERRIDES[$key] ?? '';
 		if ($constant !== '' && defined($constant)) {
 			return constant($constant);
 		}
@@ -67,16 +77,15 @@ final class Config {
 	}
 
 	/**
-	 * Agreement rules: which products/categories require signing and which Firma template to use.
-	 * First matching row wins; order is significant.
+	 * Agreement rules from Settings → unoSignature. First matching row wins.
 	 */
 	public static function get_template_map(): array {
 		$map = self::get_option_value('template_map');
-		if (is_array($map) && !empty($map)) {
-			return self::normalize_template_map($map);
+		if (!is_array($map) || empty($map)) {
+			return [];
 		}
 
-		return self::legacy_default_template_map();
+		return self::normalize_template_map($map);
 	}
 
 	private static function normalize_template_map(array $map): array {
@@ -104,51 +113,45 @@ final class Config {
 		return $normalized;
 	}
 
-	private static function legacy_default_template_map(): array {
-		$en_template = (string) self::get_option_value('paid_consultation_en');
-		$ru_template = (string) self::get_option_value('paid_consultation_ru_en');
-		$map = [];
-
-		if ($en_template !== '') {
-			$map[] = [
-				'categories'      => [],
-				'product_ids'     => [20203, 20047],
-				'excluded_ids'    => [],
-				'agreement_group' => 'paid_consultation',
-				'template_id'     => $en_template,
-			];
+	/**
+	 * One-time migration from removed flat template ID settings to template_map rows.
+	 */
+	private static function maybe_migrate_options(): void {
+		$options = get_option(self::OPTION_KEY, []);
+		if (!is_array($options)) {
+			return;
 		}
 
-		if ($ru_template !== '') {
-			$map[] = [
-				'categories'      => [],
-				'product_ids'     => [19741, 20202],
-				'excluded_ids'    => [],
-				'agreement_group' => 'paid_consultation',
-				'template_id'     => $ru_template,
-			];
+		$has_legacy_templates = !empty($options['paid_consultation_en']) || !empty($options['paid_consultation_ru_en']);
+		if (!$has_legacy_templates) {
+			return;
 		}
 
-		return $map;
-	}
+		if (empty($options['template_map'])) {
+			$map = [];
 
-	public static function maybe_define_legacy_constants(): void {
-		foreach (self::CONSTANTS as $key => $constant) {
-			if (strpos($constant, 'FIRMA_') !== 0 && strpos($constant, 'PAID_') !== 0) {
-				continue;
+			foreach (['paid_consultation_en', 'paid_consultation_ru_en'] as $legacy_key) {
+				$template_id = sanitize_text_field((string) ($options[$legacy_key] ?? ''));
+				if ($template_id === '') {
+					continue;
+				}
+
+				$map[] = [
+					'categories'      => [],
+					'product_ids'     => [],
+					'excluded_ids'    => [],
+					'agreement_group' => '',
+					'template_id'     => $template_id,
+				];
 			}
 
-			if (defined($constant)) {
-				continue;
+			if (!empty($map)) {
+				$options['template_map'] = $map;
 			}
-
-			$value = self::get_option_value($key);
-			if ($value === '') {
-				continue;
-			}
-
-			define($constant, $value);
 		}
+
+		unset($options['paid_consultation_en'], $options['paid_consultation_ru_en']);
+		update_option(self::OPTION_KEY, $options);
 	}
 
 	private static function get_option_value(string $key) {

@@ -177,24 +177,12 @@ final class Settings {
 				<p class="description">
 					<?php esc_html_e('Map WooCommerce products or categories to Firma templates. First matching rule wins.', 'unosignature'); ?>
 				</p>
-				<table class="widefat unosignature-template-map" id="unosignature-template-map">
-					<thead>
-						<tr>
-							<th><?php esc_html_e('Products', 'unosignature'); ?></th>
-							<th><?php esc_html_e('Categories', 'unosignature'); ?></th>
-							<th><?php esc_html_e('Excluded products', 'unosignature'); ?></th>
-							<th><?php esc_html_e('Agreement group', 'unosignature'); ?></th>
-							<th><?php esc_html_e('Firma template ID', 'unosignature'); ?></th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ($template_map as $index => $row) : ?>
-							<?php self::render_template_map_row((int) $index, $row, $product_categories); ?>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				<p>
+				<div class="unosignature-template-map" id="unosignature-template-map">
+					<?php foreach ($template_map as $index => $row) : ?>
+						<?php self::render_template_map_row((int) $index, $row, $product_categories); ?>
+					<?php endforeach; ?>
+				</div>
+				<p class="unosignature-template-map-actions">
 					<button type="button" class="button" id="unosignature-add-template-map-row">
 						<?php esc_html_e('Add rule', 'unosignature'); ?>
 					</button>
@@ -226,34 +214,6 @@ final class Settings {
 			return $map;
 		}
 
-		$en_template = (string) ($options['paid_consultation_en'] ?? '');
-		$ru_template = (string) ($options['paid_consultation_ru_en'] ?? '');
-		$defaults = [];
-
-		if ($en_template !== '') {
-			$defaults[] = [
-				'product_ids'     => [20203, 20047],
-				'categories'      => [],
-				'excluded_ids'    => [],
-				'agreement_group' => 'paid_consultation',
-				'template_id'     => $en_template,
-			];
-		}
-
-		if ($ru_template !== '') {
-			$defaults[] = [
-				'product_ids'     => [19741, 20202],
-				'categories'      => [],
-				'excluded_ids'    => [],
-				'agreement_group' => 'paid_consultation',
-				'template_id'     => $ru_template,
-			];
-		}
-
-		if (!empty($defaults)) {
-			return $defaults;
-		}
-
 		return [
 			[
 				'product_ids'     => [],
@@ -276,13 +236,21 @@ final class Settings {
 		$categories = array_map('sanitize_title', (array) ($row['categories'] ?? []));
 		$agreement_group = (string) ($row['agreement_group'] ?? '');
 		$template_id = (string) ($row['template_id'] ?? '');
+		$rule_number = is_numeric($index) ? ((int) $index + 1) : 1;
 		?>
-		<tr class="unosignature-template-map-row">
-			<td>
+		<div class="unosignature-template-map-row">
+			<div class="unosignature-template-map-row__header">
+				<strong><?php echo esc_html(sprintf(__('Rule %d', 'unosignature'), $rule_number)); ?></strong>
+				<button type="button" class="button-link-delete unosignature-remove-template-map-row">
+					<?php esc_html_e('Remove', 'unosignature'); ?>
+				</button>
+			</div>
+
+			<div class="unosignature-template-map-row__field">
+				<label><?php esc_html_e('Products', 'unosignature'); ?></label>
 				<select
 					class="wc-product-search"
 					multiple="multiple"
-					style="width: 100%;"
 					name="<?php echo esc_attr($name_prefix); ?>[product_ids][]"
 					data-placeholder="<?php esc_attr_e('Search for products…', 'unosignature'); ?>"
 					data-action="woocommerce_json_search_products_and_variations"
@@ -300,12 +268,13 @@ final class Settings {
 						</option>
 					<?php endforeach; ?>
 				</select>
-			</td>
-			<td>
+			</div>
+
+			<div class="unosignature-template-map-row__field">
+				<label><?php esc_html_e('Categories', 'unosignature'); ?></label>
 				<select
 					class="wc-enhanced-select"
 					multiple="multiple"
-					style="width: 100%;"
 					name="<?php echo esc_attr($name_prefix); ?>[categories][]"
 					data-placeholder="<?php esc_attr_e('Select categories…', 'unosignature'); ?>"
 				>
@@ -318,12 +287,13 @@ final class Settings {
 						</option>
 					<?php endforeach; ?>
 				</select>
-			</td>
-			<td>
+			</div>
+
+			<div class="unosignature-template-map-row__field">
+				<label><?php esc_html_e('Excluded products', 'unosignature'); ?></label>
 				<select
 					class="wc-product-search"
 					multiple="multiple"
-					style="width: 100%;"
 					name="<?php echo esc_attr($name_prefix); ?>[excluded_ids][]"
 					data-placeholder="<?php esc_attr_e('Search for products…', 'unosignature'); ?>"
 					data-action="woocommerce_json_search_products_and_variations"
@@ -341,32 +311,32 @@ final class Settings {
 						</option>
 					<?php endforeach; ?>
 				</select>
-			</td>
-			<td>
-				<input
-					class="regular-text"
-					type="text"
-					name="<?php echo esc_attr($name_prefix); ?>[agreement_group]"
-					value="<?php echo esc_attr($agreement_group); ?>"
-					placeholder="<?php esc_attr_e('e.g. paid_consultation', 'unosignature'); ?>"
-				/>
-			</td>
-			<td>
-				<input
-					class="regular-text"
-					type="text"
-					name="<?php echo esc_attr($name_prefix); ?>[template_id]"
-					value="<?php echo esc_attr($template_id); ?>"
-					placeholder="<?php esc_attr_e('Firma template ID', 'unosignature'); ?>"
-					required
-				/>
-			</td>
-			<td>
-				<button type="button" class="button-link-delete unosignature-remove-template-map-row">
-					<?php esc_html_e('Remove', 'unosignature'); ?>
-				</button>
-			</td>
-		</tr>
+			</div>
+
+			<div class="unosignature-template-map-row__inline">
+				<div class="unosignature-template-map-row__field">
+					<label><?php esc_html_e('Agreement group', 'unosignature'); ?></label>
+					<input
+						class="regular-text"
+						type="text"
+						name="<?php echo esc_attr($name_prefix); ?>[agreement_group]"
+						value="<?php echo esc_attr($agreement_group); ?>"
+						placeholder="<?php esc_attr_e('e.g. paid_consultation', 'unosignature'); ?>"
+					/>
+				</div>
+				<div class="unosignature-template-map-row__field">
+					<label><?php esc_html_e('Firma template ID', 'unosignature'); ?></label>
+					<input
+						class="regular-text"
+						type="text"
+						name="<?php echo esc_attr($name_prefix); ?>[template_id]"
+						value="<?php echo esc_attr($template_id); ?>"
+						placeholder="<?php esc_attr_e('Firma template ID', 'unosignature'); ?>"
+						required
+					/>
+				</div>
+			</div>
+		</div>
 		<?php
 	}
 
@@ -416,21 +386,65 @@ final class Settings {
 			}
 
 			.unosignature-template-map {
-				max-width: 1200px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				max-width: 640px;
 			}
 
-			.unosignature-template-map th,
-			.unosignature-template-map td {
-				vertical-align: top;
+			.unosignature-template-map-row {
+				border: 1px solid #c3c4c7;
+				border-radius: 4px;
+				background: #fff;
+				padding: 12px 14px;
 			}
 
-			.unosignature-template-map td {
-				min-width: 160px;
+			.unosignature-template-map-row__header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 10px;
+				padding-bottom: 8px;
+				border-bottom: 1px solid #dcdcde;
 			}
 
-			.unosignature-template-map .unosignature-template-map-row td:last-child {
-				width: 72px;
-				min-width: 72px;
+			.unosignature-template-map-row__field {
+				margin-bottom: 10px;
+			}
+
+			.unosignature-template-map-row__field:last-child {
+				margin-bottom: 0;
+			}
+
+			.unosignature-template-map-row__field > label {
+				display: block;
+				font-weight: 600;
+				font-size: 12px;
+				margin-bottom: 4px;
+				color: #1d2327;
+			}
+
+			.unosignature-template-map-row__field .select2-container,
+			.unosignature-template-map-row__field .regular-text {
+				width: 100% !important;
+				max-width: 100%;
+				box-sizing: border-box;
+			}
+
+			.unosignature-template-map-row__inline {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 10px;
+			}
+
+			.unosignature-template-map-actions {
+				max-width: 640px;
+			}
+
+			@media (max-width: 782px) {
+				.unosignature-template-map-row__inline {
+					grid-template-columns: 1fr;
+				}
 			}
 		</style>
 		<?php
