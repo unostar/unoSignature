@@ -9,7 +9,9 @@ cp scripts/dev/local.env.example scripts/dev/local.env
 # Edit local.env — keys stay local (gitignored)
 ```
 
-Use `FIRMA_USE_TEST_KEY=1` and `FIRMA_TEST_API_KEY` for free watermarked test requests.
+Use `FIRMA_USE_TEST_KEY=1` and `FIRMA_TEST_API_KEY` for free watermarked test requests (TEST badge in dashboard).
+
+**Firma MCP in Cursor uses the live OAuth key** — not for creating test signing requests. For visa/consultation experiments, always use these scripts with the test key. Visa payload spec: [`assets/visa/README.md`](../visa/README.md).
 
 ## Create signing request
 
