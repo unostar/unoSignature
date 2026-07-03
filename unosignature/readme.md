@@ -27,16 +27,9 @@ define('FIRMA_DEBUG', true);
 define('UNOSIGNATURE_GITHUB_REPO', 'unostar/unoSignature');
 define('UNOSIGNATURE_GITHUB_TOKEN', '...');
 define('UNOSIGNATURE_GITHUB_RELEASE_ASSET', 'unosignature.zip');
-
-// Optional: visa Firma textarea field UUIDs (override admin settings)
-define('VISA_FIRMA_FIELD_ADDITIONAL_APPLICANTS', '...');
-define('VISA_FIRMA_FIELD_REPRESENTATIVE', '...');
-define('VISA_FIRMA_FIELD_SPONSOR', '...');
 ```
 
-Signing agreement rules (products, categories, templates) are configured in the admin UI.
-
-**Visa service agreement:** three Firma `template_field_id` UUIDs (additional applicants, representative, sponsor) — **Settings → unoSignature**, section below signing rules. No built-in defaults; copy UUIDs from your Firma template. Product → template mapping uses the same signing rules (e.g. agreement group `visa_services`).
+Signing agreement rules (products, categories, templates) are configured in the admin UI. For **visa_services** rules, set three Firma `template_field_id` UUIDs on the same row (additional applicants, representative, sponsor). No built-in defaults; copy UUIDs from your Firma template.
 
 ## Webhook
 

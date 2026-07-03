@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.19
+
+- Move visa Firma textarea field UUIDs into each Signing agreement rule row (per template).
+- Remove separate Visa service agreement settings section and wp-config overrides for field UUIDs.
+
 ## 0.1.17
 
 - Add Visa service agreement settings for three Firma textarea field UUIDs (additional applicants, representative, sponsor).
