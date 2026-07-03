@@ -97,29 +97,12 @@ final class Updater {
 	}
 
 	private static function plugin_description_html(): string {
-		$firma_url = 'https://firma.dev/';
-		$author_url = 'https://unostar.dev/';
-
 		return implode('', [
 			'<p>',
-			sprintf(
-				/* translators: %s: firma.dev homepage URL */
-				__('unoSignature is a WordPress integration layer for the <a href="%s">firma.dev</a> e-signature API.', 'unosignature'),
-				esc_url($firma_url)
-			),
+			esc_html__('<strong>unoSignature</strong> is a WordPress integration layer for the <a href="https://firma.dev/">firma.dev</a> e-signature API.', 'unosignature'),
 			'</p>',
 			'<p>',
-			esc_html__('Configure contract templates, signing fields, and agreement rules in the admin. Contract content can be filled dynamically when a signing request is created.', 'unosignature'),
-			'</p>',
-			'<p>',
-			esc_html__('The plugin is contract-agnostic: one setup can cover consultations, services, NDAs, and other agreement types. WooCommerce checkout is included as a ready-made integration, not a platform limit.', 'unosignature'),
-			'</p>',
-			'<p>',
-			sprintf(
-				/* translators: %s: author homepage URL */
-				__('Developed and maintained by <a href="%s">unostar.dev</a>.', 'unosignature'),
-				esc_url($author_url)
-			),
+			sprintf(esc_html__('Configure contract templates, signing fields, and agreement rules in <strong><a href="%s">Settings → unoSignature</a></strong>.', 'unosignature'), esc_url(admin_url('options-general.php?page=unosignature'))),
 			'</p>',
 		]);
 	}
