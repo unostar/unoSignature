@@ -197,6 +197,9 @@ final class Settings {
 			'firma_webhook_secret'     => $firma_webhook_secret,
 			'firma_owner_copy_email'   => sanitize_email((string) ($input['firma_owner_copy_email'] ?? '')),
 			'template_map'             => self::sanitize_template_map($input['template_map'] ?? []),
+			'visa_field_additional_applicants' => self::sanitize_uuid_field($input['visa_field_additional_applicants'] ?? ''),
+			'visa_field_representative'        => self::sanitize_uuid_field($input['visa_field_representative'] ?? ''),
+			'visa_field_sponsor'               => self::sanitize_uuid_field($input['visa_field_sponsor'] ?? ''),
 			'firma_debug'              => !empty($input['firma_debug']) ? '1' : '',
 			'github_repo'              => sanitize_text_field((string) ($input['github_repo'] ?? '')),
 			'github_token'             => $github_token,
@@ -232,6 +235,19 @@ final class Settings {
 		}
 
 		return $map;
+	}
+
+	private static function sanitize_uuid_field(string $value): string {
+		$value = sanitize_text_field($value);
+		if ($value === '') {
+			return '';
+		}
+
+		if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $value)) {
+			return strtolower($value);
+		}
+
+		return '';
 	}
 
 	public static function render(): void {
@@ -282,6 +298,18 @@ final class Settings {
 						<?php esc_html_e('Add rule', 'unosignature'); ?>
 					</button>
 				</p>
+
+				<h2><?php esc_html_e('Visa service agreement', 'unosignature'); ?></h2>
+				<p class="description">
+					<?php esc_html_e('Firma template field UUIDs for visa textarea overrides (additional applicants, representative, sponsor). Map the visa product to the Firma template in Signing agreement rules above — typically agreement group visa_services.', 'unosignature'); ?>
+				</p>
+				<table class="form-table" role="presentation">
+					<?php
+					self::text_row('visa_field_additional_applicants', __('Field: additional applicants', 'unosignature'), $options);
+					self::text_row('visa_field_representative', __('Field: representative', 'unosignature'), $options);
+					self::text_row('visa_field_sponsor', __('Field: sponsor', 'unosignature'), $options);
+					?>
+				</table>
 
 				<table class="form-table" role="presentation">
 					<tr>

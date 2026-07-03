@@ -2,6 +2,12 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.17
+
+- Add Visa service agreement settings for three Firma textarea field UUIDs (additional applicants, representative, sponsor).
+- Expose `Config::get_visa_firma_fields()` and `Config::is_visa_agreement_group()` for upcoming visa checkout flow.
+- No hardcoded field UUIDs in plugin code; values come from admin settings or optional wp-config overrides.
+
 ## 0.1.16
 
 - Add View details link on the Plugins screen with standard WordPress plugin information modal.

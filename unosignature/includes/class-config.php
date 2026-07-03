@@ -29,6 +29,9 @@ final class Config {
 		'github_repo'              => 'UNOSIGNATURE_GITHUB_REPO',
 		'github_token'             => 'UNOSIGNATURE_GITHUB_TOKEN',
 		'github_release_asset'     => 'UNOSIGNATURE_GITHUB_RELEASE_ASSET',
+		'visa_field_additional_applicants' => 'VISA_FIRMA_FIELD_ADDITIONAL_APPLICANTS',
+		'visa_field_representative'        => 'VISA_FIRMA_FIELD_REPRESENTATIVE',
+		'visa_field_sponsor'               => 'VISA_FIRMA_FIELD_SPONSOR',
 	];
 
 	public static function init(): void {
@@ -86,6 +89,23 @@ final class Config {
 		}
 
 		return self::normalize_template_map($map);
+	}
+
+	/**
+	 * Firma template_field_id UUIDs for visa textarea overrides (data-only at SR create).
+	 *
+	 * @return array{additional_applicants: string, representative: string, sponsor: string}
+	 */
+	public static function get_visa_firma_fields(): array {
+		return [
+			'additional_applicants' => (string) self::get('visa_field_additional_applicants'),
+			'representative'        => (string) self::get('visa_field_representative'),
+			'sponsor'               => (string) self::get('visa_field_sponsor'),
+		];
+	}
+
+	public static function is_visa_agreement_group(string $agreement_group): bool {
+		return sanitize_key($agreement_group) === 'visa_services';
 	}
 
 	private static function normalize_template_map(array $map): array {
