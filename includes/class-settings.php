@@ -197,9 +197,6 @@ final class Settings {
 			'firma_webhook_secret'     => $firma_webhook_secret,
 			'firma_owner_copy_email'   => sanitize_email((string) ($input['firma_owner_copy_email'] ?? '')),
 			'template_map'             => self::sanitize_template_map($input['template_map'] ?? []),
-			'visa_field_additional_applicants' => self::sanitize_uuid_field($input['visa_field_additional_applicants'] ?? ''),
-			'visa_field_representative'        => self::sanitize_uuid_field($input['visa_field_representative'] ?? ''),
-			'visa_field_sponsor'               => self::sanitize_uuid_field($input['visa_field_sponsor'] ?? ''),
 			'firma_debug'              => !empty($input['firma_debug']) ? '1' : '',
 			'github_repo'              => sanitize_text_field((string) ($input['github_repo'] ?? '')),
 			'github_token'             => $github_token,
@@ -231,6 +228,9 @@ final class Settings {
 				'excluded_ids'    => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['excluded_ids'] ?? []))))),
 				'agreement_group' => sanitize_key((string) ($entry['agreement_group'] ?? '')),
 				'template_id'     => $template_id,
+				'field_additional_applicants' => self::sanitize_uuid_field((string) ($entry['field_additional_applicants'] ?? '')),
+				'field_representative'        => self::sanitize_uuid_field((string) ($entry['field_representative'] ?? '')),
+				'field_sponsor'               => self::sanitize_uuid_field((string) ($entry['field_sponsor'] ?? '')),
 			];
 		}
 
@@ -280,7 +280,7 @@ final class Settings {
 
 				<h2><?php esc_html_e('Signing agreement rules', 'unosignature'); ?></h2>
 				<p class="description">
-					<?php esc_html_e('Map WooCommerce products or categories to Firma templates. First matching rule wins. Rules without a template ID are ignored on save.', 'unosignature'); ?>
+					<?php esc_html_e('Map WooCommerce products or categories to Firma templates. First matching rule wins. Rules without a template ID are ignored on save. For visa_services rules, set the three Firma textarea field UUIDs on the same row.', 'unosignature'); ?>
 				</p>
 				<div class="unosignature-template-map" id="unosignature-template-map">
 					<?php if (empty($template_map)) : ?>
@@ -298,18 +298,6 @@ final class Settings {
 						<?php esc_html_e('Add rule', 'unosignature'); ?>
 					</button>
 				</p>
-
-				<h2><?php esc_html_e('Visa service agreement', 'unosignature'); ?></h2>
-				<p class="description">
-					<?php esc_html_e('Firma template field UUIDs for visa textarea overrides (additional applicants, representative, sponsor). Map the visa product to the Firma template in Signing agreement rules above — typically agreement group visa_services.', 'unosignature'); ?>
-				</p>
-				<table class="form-table" role="presentation">
-					<?php
-					self::text_row('visa_field_additional_applicants', __('Field: additional applicants', 'unosignature'), $options);
-					self::text_row('visa_field_representative', __('Field: representative', 'unosignature'), $options);
-					self::text_row('visa_field_sponsor', __('Field: sponsor', 'unosignature'), $options);
-					?>
-				</table>
 
 				<table class="form-table" role="presentation">
 					<tr>
@@ -373,6 +361,9 @@ final class Settings {
 		$admin_label = (string) ($row['admin_label'] ?? '');
 		$agreement_group = (string) ($row['agreement_group'] ?? '');
 		$template_id = (string) ($row['template_id'] ?? '');
+		$field_additional_applicants = (string) ($row['field_additional_applicants'] ?? '');
+		$field_representative = (string) ($row['field_representative'] ?? '');
+		$field_sponsor = (string) ($row['field_sponsor'] ?? '');
 		$rule_number = is_numeric($index) ? ((int) $index + 1) : 1;
 		$is_new_row = $index === '__INDEX__';
 		?>
@@ -479,6 +470,40 @@ final class Settings {
 							name="<?php echo esc_attr($name_prefix); ?>[template_id]"
 							value="<?php echo esc_attr($template_id); ?>"
 							placeholder="<?php esc_attr_e('Firma template ID', 'unosignature'); ?>"
+						/>
+					</div>
+				</div>
+
+				<div class="unosignature-template-map-row__visa-fields">
+					<p class="description"><?php esc_html_e('Visa textarea fields (optional). Used when agreement group is visa_services.', 'unosignature'); ?></p>
+					<div class="unosignature-template-map-row__field">
+						<label><?php esc_html_e('Field: additional applicants', 'unosignature'); ?></label>
+						<input
+							class="regular-text"
+							type="text"
+							name="<?php echo esc_attr($name_prefix); ?>[field_additional_applicants]"
+							value="<?php echo esc_attr($field_additional_applicants); ?>"
+							placeholder="<?php esc_attr_e('Firma template_field_id UUID', 'unosignature'); ?>"
+						/>
+					</div>
+					<div class="unosignature-template-map-row__field">
+						<label><?php esc_html_e('Field: representative', 'unosignature'); ?></label>
+						<input
+							class="regular-text"
+							type="text"
+							name="<?php echo esc_attr($name_prefix); ?>[field_representative]"
+							value="<?php echo esc_attr($field_representative); ?>"
+							placeholder="<?php esc_attr_e('Firma template_field_id UUID', 'unosignature'); ?>"
+						/>
+					</div>
+					<div class="unosignature-template-map-row__field">
+						<label><?php esc_html_e('Field: sponsor', 'unosignature'); ?></label>
+						<input
+							class="regular-text"
+							type="text"
+							name="<?php echo esc_attr($name_prefix); ?>[field_sponsor]"
+							value="<?php echo esc_attr($field_sponsor); ?>"
+							placeholder="<?php esc_attr_e('Firma template_field_id UUID', 'unosignature'); ?>"
 						/>
 					</div>
 				</div>
@@ -610,6 +635,16 @@ final class Settings {
 				display: grid;
 				grid-template-columns: 1fr 1fr;
 				gap: 10px;
+			}
+
+			.unosignature-template-map-row__visa-fields {
+				margin-top: 12px;
+				padding-top: 12px;
+				border-top: 1px solid #dcdcde;
+			}
+
+			.unosignature-template-map-row__visa-fields > .description {
+				margin: 0 0 10px;
 			}
 
 			.unosignature-template-map-row__actions {
