@@ -61,20 +61,154 @@ function uno_get_template_map()
  */
 function uno_resolve_template_for_cart()
 {
-	if (!WC()->cart) return null;
+	$rule = uno_resolve_rule_for_cart();
+	return is_array($rule) ? (string) ($rule['template_id'] ?? '') : null;
+}
+
+/**
+ * Returns the first matching signing agreement rule for the current cart.
+ *
+ * @return array<string, mixed>|null
+ */
+function uno_resolve_rule_for_cart()
+{
+	if (!WC()->cart) {
+		return null;
+	}
+
 	foreach (WC()->cart->get_cart() as $item) {
 		$product_id = (int) $item['product_id'];
 		foreach (uno_get_template_map() as $entry) {
-			if (!empty($entry['excluded_ids']) && in_array($product_id, $entry['excluded_ids'], true)) continue;
+			if (!empty($entry['excluded_ids']) && in_array($product_id, $entry['excluded_ids'], true)) {
+				continue;
+			}
+
 			if (
 				(!empty($entry['product_ids']) && in_array($product_id, $entry['product_ids'], true))
 				|| (!empty($entry['categories']) && has_term($entry['categories'], 'product_cat', $product_id))
 			) {
-				if (!empty($entry['template_id'])) return $entry['template_id'];
+				if (!empty($entry['template_id'])) {
+					return $entry;
+				}
 			}
 		}
 	}
+
 	return null;
+}
+
+/**
+ * Collect TM EPO rows from all cart items.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function uno_get_cart_tmcartepo(): array
+{
+	if (!WC()->cart) {
+		return [];
+	}
+
+	$rows = [];
+
+	foreach (WC()->cart->get_cart() as $item) {
+		if (empty($item['tmcartepo']) || !is_array($item['tmcartepo'])) {
+			continue;
+		}
+
+		foreach ($item['tmcartepo'] as $row) {
+			if (is_array($row)) {
+				$rows[] = $row;
+			}
+		}
+	}
+
+	return $rows;
+}
+
+/**
+ * Build Firma signing-request create payload for checkout.
+ *
+ * @param array<string, mixed> $rule
+ * @param array<string, mixed> $data Checkout posted data.
+ * @return array<string, mixed>
+ */
+function uno_build_firma_create_payload(array $rule, string $agreement_group, array $data): array
+{
+	$template_id = (string) ($rule['template_id'] ?? '');
+	$first = (string) ($data['billing_first_name'] ?? '');
+	$last = (string) ($data['billing_last_name'] ?? '');
+	$title = (string) ($data['billing_title'] ?? '');
+	$birthdate = (string) ($data['billing_birthdate'] ?? '');
+	$email = (string) ($data['billing_email'] ?? '');
+	$phone = (string) ($data['billing_phone'] ?? '');
+	$postcode = !empty($data['billing_postcode']) ? (string) $data['billing_postcode'] : 'N/A';
+	$state = !empty($data['billing_state']) ? (string) $data['billing_state'] : 'N/A';
+	$city = !empty($data['billing_city']) ? (string) $data['billing_city'] : 'N/A';
+	$address = !empty($data['billing_address_1']) ? (string) $data['billing_address_1'] : 'N/A';
+	$country = !empty($data['billing_country']) ? (string) $data['billing_country'] : 'N/A';
+
+	$dob_name = sprintf(
+		'%s-%s-%s-DOB-%s',
+		uno_normalize_request_name_segment($last, true),
+		uno_normalize_request_name_segment($first),
+		str_replace(['.', ',', ' '], '', $title),
+		gmdate('d-M-Y', strtotime($birthdate))
+	);
+
+	$recipient = [
+		'designation'    => 'Signer',
+		'order'          => 1,
+		'first_name'     => $first,
+		'last_name'      => $last,
+		'title'          => $title,
+		'email'          => $email,
+		'phone_number'   => $phone,
+		'street_address' => $address,
+		'city'           => $city,
+		'state_province' => $state,
+		'postal_code'    => $postcode,
+		'country'        => $country,
+	];
+
+	if ($birthdate !== '') {
+		$timestamp = strtotime($birthdate);
+		if ($timestamp !== false) {
+			$recipient['custom_fields'] = [
+				'birthdate' => gmdate('d-M-Y', $timestamp),
+			];
+		}
+	}
+
+	$payload = [
+		'template_id' => $template_id,
+		'name'        => $dob_name,
+		'recipients'  => [$recipient],
+	];
+
+	if (\UnoSignature\Config::is_visa_agreement_group($agreement_group)) {
+		$parties = \UnoSignature\VisaEpoParser::parse(uno_get_cart_tmcartepo());
+		$field_overrides = \UnoSignature\VisaTextBuilder::build_field_overrides($parties, $rule);
+
+		uno_debug([
+			'scope' => 'visa_epo_parsed',
+			'has_primary' => \UnoSignature\VisaTextBuilder::adult_has_contact($parties['primary'] ?? []),
+			'has_representative' => \UnoSignature\VisaTextBuilder::adult_has_contact($parties['representative'] ?? []),
+			'has_sponsor' => \UnoSignature\VisaTextBuilder::adult_has_contact($parties['sponsor'] ?? []),
+			'additional_applicant_count' => count($parties['additional_applicants'] ?? []),
+			'minor_child_count' => count($parties['minor_children'] ?? []),
+			'field_override_count' => count($field_overrides),
+		]);
+
+		if ($field_overrides !== []) {
+			$payload['fields'] = $field_overrides;
+		}
+
+		$payload['settings'] = [
+			'send_signing_email' => false,
+		];
+	}
+
+	return $payload;
 }
 
 /**
@@ -191,9 +325,10 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 	if ($errors->has_errors()) return;
 
 	$api_key = uno_get_firma_api_key();
-	$template_id = uno_resolve_template_for_cart();
+	$rule = uno_resolve_rule_for_cart();
+	$template_id = is_array($rule) ? (string) ($rule['template_id'] ?? '') : '';
 	$agreement_group = uno_resolve_agreement_group_for_cart();
-	if (!$template_id || !$agreement_group || $api_key === '') return;
+	if ($template_id === '' || !$agreement_group || $api_key === '') return;
 
 	$first = $data['billing_first_name'] ?? '';
 	$last  = $data['billing_last_name'] ?? '';
@@ -427,13 +562,14 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 		'create_lock_key' => $create_lock_key,
 	]);
 
-	$dob_name = sprintf(
-		'%s-%s-%s-DOB-%s',
-		uno_normalize_request_name_segment($last, true),
-		uno_normalize_request_name_segment($first),
-		str_replace(array('.', ',', ' '), '', $title),
-		gmdate('d-M-Y', strtotime($birthdate))
-	);
+	$create_payload = uno_build_firma_create_payload($rule, $agreement_group, $data);
+	uno_debug([
+		'scope' => 'checkout_validation',
+		'step' => 'create_request_payload',
+		'agreement_group' => $agreement_group,
+		'has_fields' => !empty($create_payload['fields']),
+		'field_count' => isset($create_payload['fields']) && is_array($create_payload['fields']) ? count($create_payload['fields']) : 0,
+	]);
 
 	$res = wp_remote_post(
 		"https://api.firma.dev/functions/v1/signing-request-api/signing-requests",
@@ -442,24 +578,7 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 				'Authorization' => 'Bearer ' . $api_key,
 				'Content-Type' => 'application/json'
 			],
-			'body' => json_encode([
-				'template_id' => $template_id,
-				'name' => $dob_name,
-				'recipients' => [[
-					'designation' => 'Signer',
-					'order'      => 1,
-					'first_name' => $first,
-					'last_name'  => $last,
-					'title' => $title,
-					'email'      => $email,
-					'phone_number' => $phone,
-					'street_address' => $address,
-					'city' => $city,
-					'state_province' => $state,
-					'postal_code' => $postcode,
-					'country' => $country,
-				]]
-			])
+			'body' => json_encode($create_payload)
 		]
 	);
 

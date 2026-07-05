@@ -31,6 +31,10 @@ define('UNOSIGNATURE_GITHUB_RELEASE_ASSET', 'unosignature.zip');
 
 Signing agreement rules (products, categories, templates) are configured in the admin UI. For **visa_services** rules, set three Firma `template_field_id` UUIDs on the same row (additional applicants, representative, sponsor). No built-in defaults; copy UUIDs from your Firma template.
 
+## Visa checkout (`visa_services`)
+
+When the cart matches a signing rule with agreement group `visa_services`, checkout parses TM EPO cart rows by `cssclass` (`firma_primary_*`, `firma_representative_*`, `firma_sponsor_*`, additional applicants, minor children) and sends non-empty blocks as read-only Firma `fields[]` overrides. The signer is WooCommerce billing (`recipients[0]` + `custom_fields.birthdate`). Questionnaire fields and `*_added` EPO toggles are ignored.
+
 ## Webhook
 
 Configure firma.dev to send webhook events to:

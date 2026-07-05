@@ -1,8 +1,15 @@
 # Local development — not published to GitHub
-.agent.md
 .cursor/
 .vscode/
-/assets/
+/assets/*
+!/assets/INDEX.md
+!/assets/visa/
+/assets/visa/*
+!/assets/visa/README.md
+!/assets/visa/page12-experiment.md
+!/assets/chat-history/
+/assets/chat-history/*
+!/assets/chat-history/conversation-history.md
 composer.json
 composer.lock
 esignature-current.php

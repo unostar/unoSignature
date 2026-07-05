@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## Unreleased
+
+- Add visa EPO parser and text builder; visa_services checkout sends Firma read-only textarea overrides from cart contact blocks.
+- Detect visa contact blocks by `firma_*` cssclass only; ignore questionnaire and `*_added` checkbox classes.
+
 ## 0.1.19
 
 - Move visa Firma textarea field UUIDs into each Signing agreement rule row (per template).
