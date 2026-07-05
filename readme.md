@@ -33,7 +33,7 @@ Signing agreement rules (products, categories, templates) are configured in the 
 
 ## Visa checkout (`visa_services`)
 
-When the cart matches a signing rule with agreement group `visa_services`, checkout parses TM EPO cart rows by `cssclass` (`firma_primary_*`, `firma_representative_*`, `firma_sponsor_*`, additional applicants, minor children) and sends non-empty blocks as read-only Firma `fields[]` overrides. The signer is WooCommerce billing (`recipients[0]` + `custom_fields.birthdate`). Questionnaire fields and `*_added` EPO toggles are ignored.
+When the cart matches a signing rule with agreement group `visa_services`, checkout parses TM EPO cart rows by `cssclass` (`firma_primary_*`, `firma_representative_*`, `firma_sponsor_*`, additional applicants, minor children) and sends non-empty blocks as read-only Firma `fields[]` overrides. The signer is WooCommerce billing (`recipients[0]` + `custom_fields.birthdate`). Questionnaire fields and EPO toggles are ignored.
 
 ## Webhook
 
@@ -56,8 +56,6 @@ Private GitHub Releases updates are configured in **Settings → unoSignature** 
 - GitHub repo (e.g. `unostar/unoSignature`)
 - GitHub PAT token
 - Release asset name (`unosignature.zip`)
-
-Release notes on GitHub are generated automatically from `CHANGELOG.md` when CI publishes a new version.
 
 ## Firma test mode
 
