@@ -24,6 +24,8 @@ final class Plugin {
 			return;
 		}
 
+		require_once UNOSIGNATURE_PATH . 'includes/class-visa-epo-parser.php';
+		require_once UNOSIGNATURE_PATH . 'includes/class-visa-text-builder.php';
 		require_once UNOSIGNATURE_PATH . 'includes/legacy-consultation.php';
 	}
 
