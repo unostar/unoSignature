@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.21
+
+- List all WooCommerce product categories (all WPML languages) in signing agreement rules; keep saved slugs when switching admin language.
+- Remove unused `state` field from visa EPO adult contact parsing; EPO uses `city_region` and postcode only.
+
 ## 0.1.20
 
 - Add visa EPO parser and text builder; visa_services checkout sends Firma read-only textarea overrides from cart contact blocks.

@@ -20,7 +20,6 @@ final class VisaEpoParser {
 		'address',
 		'city_region',
 		'postcode',
-		'state',
 		'country',
 		'email',
 		'messenger',
