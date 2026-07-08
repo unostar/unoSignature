@@ -258,13 +258,16 @@ final class Settings {
 		$options = get_option(Config::OPTION_KEY, []);
 		$options = is_array($options) ? $options : [];
 		$template_map = self::get_display_template_map($options);
-		$product_categories = get_terms([
-			'taxonomy'   => 'product_cat',
-			'hide_empty' => false,
-		]);
-		if (is_wp_error($product_categories)) {
-			$product_categories = [];
+		$required_category_slugs = [];
+		foreach ($template_map as $row) {
+			if (!is_array($row)) {
+				continue;
+			}
+			foreach ((array) ($row['categories'] ?? []) as $slug) {
+				$required_category_slugs[] = (string) $slug;
+			}
 		}
+		$product_categories = self::get_product_categories_for_settings($required_category_slugs);
 		?>
 		<div class="wrap">
 			<h1>unoSignature</h1>
@@ -350,6 +353,75 @@ final class Settings {
 	}
 
 	/**
+	 * Product categories for signing rules (all WPML languages when available).
+	 *
+	 * @param array<int, string> $required_slugs Saved slugs to keep visible even if filtered out.
+	 * @return array<int, \WP_Term>
+	 */
+	private static function get_product_categories_for_settings(array $required_slugs = []): array {
+		$args = [
+			'taxonomy'   => 'product_cat',
+			'hide_empty' => false,
+		];
+
+		if (has_filter('wpml_active_languages')) {
+			$args['lang'] = 'all';
+		}
+
+		$terms = get_terms($args);
+		if (is_wp_error($terms)) {
+			$terms = [];
+		}
+
+		$by_slug = [];
+		foreach ($terms as $term) {
+			if ($term instanceof \WP_Term && $term->slug !== '') {
+				$by_slug[$term->slug] = $term;
+			}
+		}
+
+		foreach ($required_slugs as $slug) {
+			$slug = sanitize_title($slug);
+			if ($slug === '' || isset($by_slug[$slug])) {
+				continue;
+			}
+
+			$term = get_term_by('slug', $slug, 'product_cat');
+			if ($term instanceof \WP_Term) {
+				$by_slug[$slug] = $term;
+			}
+		}
+
+		$categories = array_values($by_slug);
+		usort(
+			$categories,
+			static function (\WP_Term $a, \WP_Term $b): int {
+				return strcasecmp($a->name, $b->name);
+			}
+		);
+
+		return $categories;
+	}
+
+	private static function format_category_option_label(\WP_Term $category): string {
+		$name = $category->name;
+		$lang = apply_filters(
+			'wpml_element_language_code',
+			null,
+			[
+				'element_id'   => (int) $category->term_taxonomy_id,
+				'element_type' => 'tax_product_cat',
+			]
+		);
+
+		if (is_string($lang) && $lang !== '') {
+			return $name . ' (' . strtoupper($lang) . ')';
+		}
+
+		return $name;
+	}
+
+	/**
 	 * @param int|string $index
 	 */
 	private static function render_template_map_row($index, array $row, array $product_categories): void {
@@ -420,7 +492,7 @@ final class Settings {
 								value="<?php echo esc_attr($category->slug); ?>"
 								<?php selected(in_array($category->slug, $categories, true)); ?>
 							>
-								<?php echo esc_html($category->name); ?>
+								<?php echo esc_html(self::format_category_option_label($category)); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>

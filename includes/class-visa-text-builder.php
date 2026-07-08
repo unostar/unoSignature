@@ -155,10 +155,8 @@ final class VisaTextBuilder {
 		}
 
 		$postcode = trim((string) ($contact['postcode'] ?? ''));
-		$state = trim((string) ($contact['state'] ?? ''));
-		$postcode_state = trim($postcode . ' ' . $state);
-		if ($postcode_state !== '') {
-			$parts[] = $postcode_state;
+		if ($postcode !== '') {
+			$parts[] = $postcode;
 		}
 
 		foreach (['country', 'email', 'messenger'] as $field) {
