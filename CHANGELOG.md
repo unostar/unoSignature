@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.25
+
+- Fix duplicate View details link on the Plugins screen (WordPress already adds one via the update API).
+- Render plugin description HTML correctly in the details modal instead of showing escaped tags.
+
 ## 0.1.24
 
 - Add plugin icon (128px and 256px) for the WordPress plugins list and update details modal.
