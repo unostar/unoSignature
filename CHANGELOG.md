@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.27
+
+- Replace plugin PNG icons with a single SVG icon: document, signature, and signed badge on an indigo background.
+- Drop PNG icon assets; WordPress update UI uses the SVG only.
+
 ## 0.1.26
 
 - Regenerate plugin icons with a transparent PNG background so rounded corners no longer show black edges in the WordPress admin UI.
