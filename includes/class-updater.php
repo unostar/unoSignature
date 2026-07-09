@@ -17,7 +17,6 @@ final class Updater {
 	public static function init(): void {
 		add_filter('pre_set_site_transient_update_plugins', [self::class, 'check_for_update']);
 		add_filter('plugins_api', [self::class, 'plugin_info'], 10, 3);
-		add_filter('plugin_row_meta', [self::class, 'plugin_row_meta'], 10, 2);
 		add_filter('upgrader_pre_download', [self::class, 'download_private_asset'], 10, 4);
 	}
 
@@ -95,39 +94,20 @@ final class Updater {
 		];
 	}
 
-	public static function plugin_row_meta(array $links, string $file): array {
-		if ($file !== UNOSIGNATURE_BASENAME) {
-			return $links;
-		}
-
-		$links[] = sprintf(
-			'<a href="%1$s" class="thickbox open-plugin-details-modal" aria-label="%2$s" data-title="%3$s">%4$s</a>',
-			esc_url(
-				network_admin_url(
-					'plugin-install.php?tab=plugin-information&plugin=unosignature&TB_iframe=true&width=772&height=537'
-				)
-			),
-			esc_attr(sprintf(
-				/* translators: %s: plugin name */
-				__('More information about %s', 'unosignature'),
-				'unoSignature'
-			)),
-			esc_attr('unoSignature'),
-			esc_html__('View details', 'unosignature')
-		);
-
-		return $links;
-	}
-
 	private static function plugin_description_html(): string {
-		return implode('', [
-			'<p>',
-			esc_html__('<strong>unoSignature</strong> is a WordPress integration layer for the <a href="https://firma.dev/">firma.dev</a> e-signature API.', 'unosignature'),
-			'</p>',
-			'<p>',
-			sprintf(esc_html__('Configure contract templates, signing fields, and agreement rules in <strong><a href="%s">Settings → unoSignature</a></strong>.', 'unosignature'), esc_url(admin_url('options-general.php?page=unosignature'))),
-			'</p>',
-		]);
+		$settings_url = esc_url(admin_url('options-general.php?page=unosignature'));
+
+		return wp_kses(
+			'<p><strong>unoSignature</strong> is a WordPress integration layer for the <a href="https://firma.dev/">firma.dev</a> e-signature API.</p>'
+			. '<p>Configure contract templates, signing fields, and agreement rules in <strong><a href="' . $settings_url . '">Settings → unoSignature</a></strong>.</p>',
+			[
+				'p'      => [],
+				'strong' => [],
+				'a'      => [
+					'href' => true,
+				],
+			]
+		);
 	}
 
 	public static function download_private_asset($reply, string $package, $upgrader, array $hook_extra = []) {
