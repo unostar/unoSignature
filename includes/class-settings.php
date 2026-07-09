@@ -359,18 +359,17 @@ final class Settings {
 	 * @return array<int, \WP_Term>
 	 */
 	private static function get_product_categories_for_settings(array $required_slugs = []): array {
-		$args = [
-			'taxonomy'   => 'product_cat',
-			'hide_empty' => false,
-		];
-
-		if (has_filter('wpml_active_languages')) {
-			$args['lang'] = 'all';
-		}
-
-		$terms = get_terms($args);
-		if (is_wp_error($terms)) {
-			$terms = [];
+		$wpml_active = has_filter('wpml_active_languages');
+		if ($wpml_active) {
+			$terms = self::query_product_categories_unfiltered();
+		} else {
+			$terms = get_terms([
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+			]);
+			if (is_wp_error($terms)) {
+				$terms = [];
+			}
 		}
 
 		$by_slug = [];
@@ -386,7 +385,9 @@ final class Settings {
 				continue;
 			}
 
-			$term = get_term_by('slug', $slug, 'product_cat');
+			$term = $wpml_active
+				? self::get_product_category_by_slug_unfiltered($slug)
+				: get_term_by('slug', $slug, 'product_cat');
 			if ($term instanceof \WP_Term) {
 				$by_slug[$slug] = $term;
 			}
@@ -401,6 +402,76 @@ final class Settings {
 		);
 
 		return $categories;
+	}
+
+	/**
+	 * WPML can still filter get_terms() by the current admin language. The settings
+	 * page needs every product category so rules can be configured cross-language.
+	 *
+	 * @return array<int, \WP_Term>
+	 */
+	private static function query_product_categories_unfiltered(): array {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"
+				SELECT t.term_id, t.name, t.slug, t.term_group,
+					tt.term_taxonomy_id, tt.taxonomy, tt.description, tt.parent, tt.count
+				FROM {$wpdb->terms} t
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_id = t.term_id
+				WHERE tt.taxonomy = %s
+				ORDER BY t.name ASC
+				",
+				'product_cat'
+			)
+		);
+
+		return self::product_category_rows_to_terms((array) $rows);
+	}
+
+	private static function get_product_category_by_slug_unfiltered(string $slug): ?\WP_Term {
+		global $wpdb;
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"
+				SELECT t.term_id, t.name, t.slug, t.term_group,
+					tt.term_taxonomy_id, tt.taxonomy, tt.description, tt.parent, tt.count
+				FROM {$wpdb->terms} t
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_id = t.term_id
+				WHERE tt.taxonomy = %s
+					AND t.slug = %s
+				LIMIT 1
+				",
+				'product_cat',
+				$slug
+			)
+		);
+
+		$terms = self::product_category_rows_to_terms($row ? [$row] : []);
+
+		return $terms[0] ?? null;
+	}
+
+	/**
+	 * @param array<int, object> $rows
+	 * @return array<int, \WP_Term>
+	 */
+	private static function product_category_rows_to_terms(array $rows): array {
+		$terms = [];
+
+		foreach ($rows as $row) {
+			$row->term_id = (int) $row->term_id;
+			$row->term_taxonomy_id = (int) $row->term_taxonomy_id;
+			$row->term_group = (int) $row->term_group;
+			$row->parent = (int) $row->parent;
+			$row->count = (int) $row->count;
+			$row->filter = 'raw';
+			$terms[] = new \WP_Term($row);
+		}
+
+		return $terms;
 	}
 
 	private static function format_category_option_label(\WP_Term $category): string {
