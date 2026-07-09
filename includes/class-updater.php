@@ -68,8 +68,6 @@ final class Updater {
 	private static function plugin_icons(): array {
 		return [
 			'svg' => UNOSIGNATURE_URL . 'assets/icon.svg',
-			'1x'  => UNOSIGNATURE_URL . 'assets/icon-128x128.png',
-			'2x'  => UNOSIGNATURE_URL . 'assets/icon-256x256.png',
 		];
 	}
 
