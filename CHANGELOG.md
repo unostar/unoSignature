@@ -2,7 +2,12 @@
 
 All notable changes to unoSignature will be documented in this file.
 
-## 0.1.22
+## 0.1.24
+
+- Add plugin icon (128px and 256px) for the WordPress plugins list and update details modal.
+- Drive release versions from the top `CHANGELOG.md` entry instead of auto-bumping the plugin header, so release numbers and notes stay in sync.
+
+## 0.1.23
 
 - Load WooCommerce product categories for signing rules with an unfiltered WordPress term query when WPML is active, so RU and EN categories are visible together in the admin selector.
 

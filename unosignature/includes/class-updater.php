@@ -27,23 +27,16 @@ final class Updater {
 		}
 
 		$release = self::latest_release();
-		if (!$release || empty($release['version']) || empty($release['asset_url'])) {
+		$item = self::update_item($release);
+		if (!$item) {
 			return $transient;
 		}
 
-		if (!version_compare((string) $release['version'], UNOSIGNATURE_VERSION, '>')) {
-			return $transient;
+		if (!empty($release['version']) && version_compare((string) $release['version'], UNOSIGNATURE_VERSION, '>')) {
+			$transient->response[UNOSIGNATURE_BASENAME] = $item;
+		} else {
+			$transient->no_update[UNOSIGNATURE_BASENAME] = $item;
 		}
-
-		$transient->response[UNOSIGNATURE_BASENAME] = (object) [
-			'id'          => UNOSIGNATURE_BASENAME,
-			'slug'        => 'unosignature',
-			'plugin'      => UNOSIGNATURE_BASENAME,
-			'new_version' => (string) $release['version'],
-			'url'         => (string) ($release['html_url'] ?? 'https://unostar.dev/'),
-			'package'     => (string) $release['asset_url'],
-			'tested'      => get_bloginfo('version'),
-		];
 
 		return $transient;
 	}
@@ -65,10 +58,40 @@ final class Updater {
 			'tested'        => get_bloginfo('version'),
 			'requires'      => '6.0',
 			'requires_php'  => '7.4',
+			'icons'         => self::plugin_icons(),
 			'sections'      => [
 				'description' => self::plugin_description_html(),
 				'changelog'   => Changelog::get_html() ?: wp_kses_post((string) ($release['body'] ?? '')),
 			],
+		];
+	}
+
+	private static function plugin_icons(): array {
+		return [
+			'1x' => UNOSIGNATURE_URL . 'assets/icon-128x128.png',
+			'2x' => UNOSIGNATURE_URL . 'assets/icon-256x256.png',
+		];
+	}
+
+	private static function update_item(?array $release): ?object {
+		if (!$release || empty($release['version']) || empty($release['asset_url'])) {
+			return null;
+		}
+
+		return (object) [
+			'id'            => UNOSIGNATURE_BASENAME,
+			'slug'          => 'unosignature',
+			'plugin'        => UNOSIGNATURE_BASENAME,
+			'new_version'   => (string) $release['version'],
+			'url'           => (string) ($release['html_url'] ?? 'https://unostar.dev/'),
+			'package'       => (string) $release['asset_url'],
+			'tested'        => get_bloginfo('version'),
+			'requires'      => '6.0',
+			'requires_php'  => '7.4',
+			'icons'         => self::plugin_icons(),
+			'banners'       => [],
+			'banners_rtl'   => [],
+			'compatibility' => new \stdClass(),
 		];
 	}
 

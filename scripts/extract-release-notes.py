@@ -14,7 +14,7 @@ def extract_release_notes(version: str, changelog: Path) -> str:
 	pattern = rf"(?ms)^## {re.escape(version)}\s*\n(.*?)(?=^## |\Z)"
 	match = re.search(pattern, text)
 	if not match:
-		return f"unoSignature release {version}."
+		raise SystemExit(f"Missing CHANGELOG section for version {version}.")
 
 	return match.group(1).strip()
 
