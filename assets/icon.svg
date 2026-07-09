@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="unoSignature">
+  <rect width="256" height="256" rx="56" fill="#2d3a8c"/>
+  <rect x="56" y="46" width="144" height="158" rx="8" fill="#fff"/>
+  <path d="M176 46 L200 70 L176 70 Z" fill="#e6e9f0"/>
+  <path d="M74 132 C98 118 118 150 142 126 S182 108 198 118" fill="none" stroke="#2d3a8c" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="188" cy="176" r="28" fill="#2ea043"/>
+  <path d="M176 176 L184 184 L202 164" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
