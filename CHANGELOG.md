@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.22
+
+- Load WooCommerce product categories for signing rules with an unfiltered WordPress term query when WPML is active, so RU and EN categories are visible together in the admin selector.
+
 ## 0.1.21
 
 - List all WooCommerce product categories (all WPML languages) in signing agreement rules; keep saved slugs when switching admin language.
