@@ -3,7 +3,7 @@
  * Plugin Name: unoSignature
  * Plugin URI: https://unostar.dev/
  * Description: WordPress integration for the firma.dev e-signature API — configurable contracts, signing fields, and dynamic document content.
- * Version: 0.1.24
+ * Version: 0.1.25
  * Author: unostar.dev
  * Author URI: https://unostar.dev/
  * Text Domain: unosignature
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-define('UNOSIGNATURE_VERSION', '0.1.24');
+define('UNOSIGNATURE_VERSION', '0.1.25');
 define('UNOSIGNATURE_FILE', __FILE__);
 define('UNOSIGNATURE_PATH', plugin_dir_path(__FILE__));
 define('UNOSIGNATURE_URL', plugin_dir_url(__FILE__));
