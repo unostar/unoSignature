@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.26
+
+- Regenerate plugin icons with a transparent PNG background so rounded corners no longer show black edges in the WordPress admin UI.
+- Add an SVG plugin icon for sharper rendering on update screens.
+
 ## 0.1.25
 
 - Fix duplicate View details link on the Plugins screen (WordPress already adds one via the update API).
