@@ -61,7 +61,10 @@ final class Updater {
 			'icons'         => self::plugin_icons(),
 			'sections'      => [
 				'description' => self::plugin_description_html(),
-				'changelog'   => Changelog::get_html() ?: wp_kses_post((string) ($release['body'] ?? '')),
+				'changelog'   => Changelog::get_update_html(
+					(string) ($release['version'] ?? ''),
+					(string) ($release['body'] ?? '')
+				),
 			],
 		];
 	}

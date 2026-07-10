@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.32
+
+- Fix update details modal: show the offered release changelog from GitHub when the installed plugin does not include that version yet.
+
 ## 0.1.31
 
 - Visa `additional_applicants` textarea: put Primary Applicant first; show the Additional Applicant's header only when there are additional adults or minor children.
