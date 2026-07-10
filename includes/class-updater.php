@@ -1,6 +1,6 @@
 <?php
 /**
- * Private GitHub Releases updater for unoSignature.
+ * Public GitHub Releases updater for unoSignature.
  *
  * @package UnoSignature
  */
@@ -13,11 +13,12 @@ if (!defined('ABSPATH')) {
 
 final class Updater {
 	private const CACHE_KEY = 'unosignature_latest_release';
+	private const GITHUB_REPO = 'unostar/unoSignature';
+	private const RELEASE_ASSET = 'unosignature.zip';
 
 	public static function init(): void {
 		add_filter('pre_set_site_transient_update_plugins', [self::class, 'check_for_update']);
 		add_filter('plugins_api', [self::class, 'plugin_info'], 10, 3);
-		add_filter('upgrader_pre_download', [self::class, 'download_private_asset'], 10, 4);
 	}
 
 	public static function check_for_update($transient) {
@@ -81,7 +82,7 @@ final class Updater {
 			'slug'          => 'unosignature',
 			'plugin'        => UNOSIGNATURE_BASENAME,
 			'new_version'   => (string) $release['version'],
-			'url'           => (string) ($release['html_url'] ?? 'https://unostar.dev/'),
+			'url'           => (string) ($release['html_url'] ?? 'https://github.com/' . self::GITHUB_REPO),
 			'package'       => (string) $release['asset_url'],
 			'tested'        => get_bloginfo('version'),
 			'requires'      => '6.0',
@@ -109,68 +110,16 @@ final class Updater {
 		);
 	}
 
-	public static function download_private_asset($reply, string $package, $upgrader, array $hook_extra = []) {
-		unset($upgrader);
-
-		if (strpos($package, 'https://api.github.com/repos/') !== 0 || strpos($package, '/releases/assets/') === false) {
-			return $reply;
-		}
-
-		$plugin = $hook_extra['plugin'] ?? '';
-		if ($plugin !== UNOSIGNATURE_BASENAME) {
-			return $reply;
-		}
-
-		$token = (string) Config::get('github_token', '');
-		if ($token === '') {
-			return new \WP_Error('unosignature_missing_github_token', 'Missing GitHub token for private unoSignature update.');
-		}
-
-		$tmp_file = wp_tempnam('unosignature-update');
-		if (!$tmp_file) {
-			return new \WP_Error('unosignature_temp_file_failed', 'Could not create temporary update file.');
-		}
-
-		$response = wp_remote_get(
-			$package,
-			[
-				'headers'  => self::github_headers($token, 'application/octet-stream'),
-				'timeout'  => 60,
-				'stream'   => true,
-				'filename' => $tmp_file,
-			]
-		);
-
-		if (is_wp_error($response)) {
-			@unlink($tmp_file);
-			return $response;
-		}
-
-		$code = (int) wp_remote_retrieve_response_code($response);
-		if ($code >= 400 || !file_exists($tmp_file) || filesize($tmp_file) <= 0) {
-			@unlink($tmp_file);
-			return new \WP_Error('unosignature_download_failed', 'Could not download private unoSignature update asset.');
-		}
-
-		return $tmp_file;
-	}
-
 	private static function latest_release(): ?array {
 		$cached = get_site_transient(self::CACHE_KEY);
 		if (is_array($cached)) {
 			return $cached;
 		}
 
-		$repo = trim((string) Config::get('github_repo', ''));
-		$token = trim((string) Config::get('github_token', ''));
-		if ($repo === '' || $token === '' || strpos($repo, '/') === false) {
-			return null;
-		}
-
 		$response = wp_remote_get(
-			'https://api.github.com/repos/' . self::repo_path($repo) . '/releases/latest',
+			'https://api.github.com/repos/' . self::repo_path(self::GITHUB_REPO) . '/releases/latest',
 			[
-				'headers' => self::github_headers($token),
+				'headers' => self::github_headers(),
 				'timeout' => 20,
 			]
 		);
@@ -189,11 +138,16 @@ final class Updater {
 			return null;
 		}
 
+		$download_url = (string) ($asset['browser_download_url'] ?? '');
+		if ($download_url === '') {
+			return null;
+		}
+
 		$release = [
 			'version'   => ltrim((string) ($body['tag_name'] ?? ''), 'vV'),
 			'html_url'  => (string) ($body['html_url'] ?? ''),
 			'body'      => (string) ($body['body'] ?? ''),
-			'asset_url' => (string) ($asset['url'] ?? ''),
+			'asset_url' => $download_url,
 		];
 
 		set_site_transient(self::CACHE_KEY, $release, 15 * MINUTE_IN_SECONDS);
@@ -202,15 +156,13 @@ final class Updater {
 	}
 
 	private static function release_asset(array $release): ?array {
-		$asset_name = (string) Config::get('github_release_asset', 'unosignature.zip');
 		$assets = $release['assets'] ?? [];
-
 		if (!is_array($assets)) {
 			return null;
 		}
 
 		foreach ($assets as $asset) {
-			if (is_array($asset) && (string) ($asset['name'] ?? '') === $asset_name) {
+			if (is_array($asset) && (string) ($asset['name'] ?? '') === self::RELEASE_ASSET) {
 				return $asset;
 			}
 		}
@@ -218,10 +170,9 @@ final class Updater {
 		return null;
 	}
 
-	private static function github_headers(string $token, string $accept = 'application/vnd.github+json'): array {
+	private static function github_headers(string $accept = 'application/vnd.github+json'): array {
 		return [
 			'Accept'               => $accept,
-			'Authorization'        => 'Bearer ' . $token,
 			'X-GitHub-Api-Version' => '2022-11-28',
 			'User-Agent'           => 'unoSignature/' . UNOSIGNATURE_VERSION,
 		];

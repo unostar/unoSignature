@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.30
+
+- Switch the GitHub updater to public releases: hardcoded `unostar/unoSignature`, no token required.
+- Remove the Plugin updates (GitHub) section from Settings; drop stored GitHub credentials on upgrade.
+
 ## 0.1.29
 
 - Restructure the GitHub repository to plugin-only files (clean public layout).

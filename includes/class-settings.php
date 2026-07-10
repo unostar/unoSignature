@@ -185,11 +185,6 @@ final class Settings {
 			$firma_test_api_key = (string) $current['firma_test_api_key'];
 		}
 
-		$github_token = sanitize_text_field((string) ($input['github_token'] ?? ''));
-		if ($github_token === '' && !empty($current['github_token'])) {
-			$github_token = (string) $current['github_token'];
-		}
-
 		return [
 			'firma_api_key'            => $firma_api_key,
 			'firma_test_api_key'       => $firma_test_api_key,
@@ -198,9 +193,6 @@ final class Settings {
 			'firma_owner_copy_email'   => sanitize_email((string) ($input['firma_owner_copy_email'] ?? '')),
 			'template_map'             => self::sanitize_template_map($input['template_map'] ?? []),
 			'firma_debug'              => !empty($input['firma_debug']) ? '1' : '',
-			'github_repo'              => sanitize_text_field((string) ($input['github_repo'] ?? '')),
-			'github_token'             => $github_token,
-			'github_release_asset'     => sanitize_file_name((string) ($input['github_release_asset'] ?? 'unosignature.zip')),
 		];
 	}
 
@@ -322,16 +314,6 @@ final class Settings {
 						</td>
 					</tr>
 				</table>
-
-				<details class="unosignature-settings-panel">
-					<summary><?php esc_html_e('Plugin updates (GitHub)', 'unosignature'); ?></summary>
-					<p class="description"><?php esc_html_e('Private GitHub Releases updater. Leave collapsed unless you need to change update credentials.', 'unosignature'); ?></p>
-					<table class="form-table" role="presentation">
-						<?php self::text_row('github_repo', 'GitHub repo', $options, 'text', 'unostar/unoSignature'); ?>
-						<?php self::text_row('github_token', 'GitHub token', $options, 'password', !empty($options['github_token']) ? 'Token is saved; leave blank to keep it' : ''); ?>
-						<?php self::text_row('github_release_asset', 'Release asset name', $options, 'text', 'unosignature.zip'); ?>
-					</table>
-				</details>
 
 				<?php submit_button(); ?>
 			</form>
@@ -694,27 +676,6 @@ final class Settings {
 	public static function admin_styles(): void {
 		?>
 		<style>
-			.unosignature-settings-panel {
-				margin: 1.5em 0;
-				max-width: 960px;
-			}
-
-			.unosignature-settings-panel > summary {
-				cursor: pointer;
-				font-size: 14px;
-				font-weight: 600;
-				line-height: 1.4;
-				list-style: revert;
-			}
-
-			.unosignature-settings-panel[open] > summary {
-				margin-bottom: 0.75em;
-			}
-
-			.unosignature-settings-panel > .description {
-				margin: 0 0 1em;
-			}
-
 			.unosignature-template-map,
 			.unosignature-template-map-actions,
 			.unosignature-template-map-empty {

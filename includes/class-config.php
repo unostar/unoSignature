@@ -26,13 +26,11 @@ final class Config {
 		'firma_webhook_secret'     => 'FIRMA_WEBHOOK_SECRET',
 		'firma_owner_copy_email'   => 'FIRMA_OWNER_COPY_EMAIL',
 		'firma_debug'              => 'FIRMA_DEBUG',
-		'github_repo'              => 'UNOSIGNATURE_GITHUB_REPO',
-		'github_token'             => 'UNOSIGNATURE_GITHUB_TOKEN',
-		'github_release_asset'     => 'UNOSIGNATURE_GITHUB_RELEASE_ASSET',
 	];
 
 	public static function init(): void {
 		self::maybe_migrate_options();
+		self::maybe_remove_github_settings();
 	}
 
 	public static function get(string $key, $default = '') {
@@ -174,6 +172,28 @@ final class Config {
 
 		unset($options['paid_consultation_en'], $options['paid_consultation_ru_en']);
 		update_option(self::OPTION_KEY, $options);
+	}
+
+	/**
+	 * Drop removed GitHub updater settings from stored options.
+	 */
+	private static function maybe_remove_github_settings(): void {
+		$options = get_option(self::OPTION_KEY, []);
+		if (!is_array($options)) {
+			return;
+		}
+
+		$changed = false;
+		foreach (['github_repo', 'github_token', 'github_release_asset'] as $key) {
+			if (array_key_exists($key, $options)) {
+				unset($options[$key]);
+				$changed = true;
+			}
+		}
+
+		if ($changed) {
+			update_option(self::OPTION_KEY, $options);
+		}
 	}
 
 	private static function normalize_uuid_field(string $value): string {

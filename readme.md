@@ -24,9 +24,6 @@ define('FIRMA_USE_TEST_KEY', true);
 define('FIRMA_WEBHOOK_SECRET', '...');
 define('FIRMA_OWNER_COPY_EMAIL', 'owner@example.com');
 define('FIRMA_DEBUG', true);
-define('UNOSIGNATURE_GITHUB_REPO', 'unostar/unoSignature');
-define('UNOSIGNATURE_GITHUB_TOKEN', '...');
-define('UNOSIGNATURE_GITHUB_RELEASE_ASSET', 'unosignature.zip');
 ```
 
 Signing agreement rules (products, categories, templates) are configured in the admin UI. For **visa_services** rules, set three Firma `template_field_id` UUIDs on the same row (additional applicants, representative, sponsor). No built-in defaults; copy UUIDs from your Firma template.
@@ -51,11 +48,7 @@ Handled events:
 
 ## Updates
 
-Private GitHub Releases updates are configured in **Settings → unoSignature** (collapsed section):
-
-- GitHub repo (e.g. `unostar/unoSignature`)
-- GitHub PAT token
-- Release asset name (`unosignature.zip`)
+Updates are delivered automatically from public [GitHub Releases](https://github.com/unostar/unoSignature/releases) (`unosignature.zip`). No GitHub settings or token required in WordPress.
 
 ## Firma test mode
 
