@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.29
+
+- Restructure the GitHub repository to plugin-only files (clean public layout).
+- Inline release automation in GitHub Actions; remove the `scripts/` folder from the repo tree.
+
 ## 0.1.28
 
 - Redesign the SVG plugin icon: contract sheet, signature stroke, and verified seal on an indigo background.
