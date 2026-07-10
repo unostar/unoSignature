@@ -12,8 +12,11 @@ if (!defined('ABSPATH')) {
 }
 
 final class Changelog {
+	private const GITHUB_REPO = 'unostar/unoSignature';
+	private const REMOTE_CACHE_PREFIX = 'unosignature_remote_changelog_';
+
 	public static function get_html(int $limit = 12): string {
-		$markdown = self::read_markdown();
+		$markdown = self::read_local_markdown();
 		if ($markdown === '') {
 			return '';
 		}
@@ -22,12 +25,24 @@ final class Changelog {
 	}
 
 	/**
-	 * Changelog for the update details modal: prepend GitHub release notes for the
-	 * offered version when the installed plugin does not have that section yet.
+	 * Changelog for the update details modal.
+	 *
+	 * When an update is available, load CHANGELOG.md from the GitHub release tag
+	 * so all versions since the installed copy are shown (not only /releases/latest body).
 	 */
 	public static function get_update_html(string $target_version, string $release_body, int $limit = 12): string {
-		$markdown = self::read_markdown();
+		if ($target_version !== '' && version_compare($target_version, UNOSIGNATURE_VERSION, '>')) {
+			$remote = self::fetch_remote_markdown($target_version);
+			if ($remote !== '') {
+				$html = self::markdown_to_html($remote, $limit);
+				if ($html !== '') {
+					return $html;
+				}
+			}
+		}
+
 		$html = '';
+		$markdown = self::read_local_markdown();
 
 		if (
 			$target_version !== ''
@@ -47,7 +62,51 @@ final class Changelog {
 		return $html;
 	}
 
-	private static function read_markdown(): string {
+	private static function fetch_remote_markdown(string $version): string {
+		$cache_key = self::REMOTE_CACHE_PREFIX . $version;
+		$cached = get_site_transient($cache_key);
+		if (is_string($cached)) {
+			return $cached;
+		}
+
+		$tag = 'v' . ltrim($version, 'vV');
+		$refs = [$tag, 'main'];
+
+		foreach ($refs as $ref) {
+			$url = sprintf(
+				'https://raw.githubusercontent.com/%s/%s/CHANGELOG.md',
+				self::GITHUB_REPO,
+				rawurlencode($ref)
+			);
+
+			$response = wp_remote_get(
+				$url,
+				[
+					'timeout' => 15,
+					'headers' => [
+						'User-Agent' => 'unoSignature/' . UNOSIGNATURE_VERSION,
+					],
+				]
+			);
+
+			if (is_wp_error($response) || (int) wp_remote_retrieve_response_code($response) !== 200) {
+				continue;
+			}
+
+			$markdown = (string) wp_remote_retrieve_body($response);
+			if ($markdown === '') {
+				continue;
+			}
+
+			set_site_transient($cache_key, $markdown, 15 * MINUTE_IN_SECONDS);
+
+			return $markdown;
+		}
+
+		return '';
+	}
+
+	private static function read_local_markdown(): string {
 		$candidates = [
 			UNOSIGNATURE_PATH . 'CHANGELOG.md',
 			dirname(UNOSIGNATURE_PATH) . '/CHANGELOG.md',

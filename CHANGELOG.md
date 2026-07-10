@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.34
+
+- Update details modal: load the full `CHANGELOG.md` from the GitHub release tag instead of the installed copy, so skipped versions (e.g. 0.1.32–0.1.33) appear before you update.
+
 ## 0.1.33
 
 - Visa minor child birthdates: always format contract dates as `d-M-Y`, parsing EPO `DD/MM/YYYY` correctly instead of relying on `strtotime()`.
