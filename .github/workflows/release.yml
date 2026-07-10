@@ -1,0 +1,75 @@
+name: Release unoSignature
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: "${{ github.event_name != 'push' || !contains(github.event.head_commit.message, 'chore: release') }}"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare release version from changelog
+        id: version
+        run: |
+          VERSION=$(python3 scripts/prepare-release.py unosignature.php CHANGELOG.md)
+          if [ "$VERSION" = "skip" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract release notes
+        if: steps.version.outputs.skip != 'true'
+        run: python3 scripts/extract-release-notes.py "${{ steps.version.outputs.version }}" CHANGELOG.md > release-notes.md
+
+      - name: Commit version bump
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          git add unosignature.php
+          git commit -m "chore: release v${{ steps.version.outputs.version }} [skip ci]"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin HEAD:main
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Build plugin zip
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          rm -rf build unosignature.zip
+          mkdir -p build/unosignature
+          rsync -a \
+            --exclude .git \
+            --exclude build \
+            --exclude .github \
+            --exclude scripts \
+            --exclude .DS_Store \
+            ./ build/unosignature/
+          cp CHANGELOG.md build/unosignature/CHANGELOG.md
+          (cd build && zip -r ../unosignature.zip unosignature)
+
+      - name: Create GitHub release
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            unosignature.zip \
+            --title "unoSignature v${{ steps.version.outputs.version }}" \
+            --notes-file release-notes.md
