@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.28
+
+- Redesign the SVG plugin icon: contract sheet, signature stroke, and verified seal on an indigo background.
+
 ## 0.1.27
 
 - Replace plugin PNG icons with a single SVG icon: document, signature, and signed badge on an indigo background.
