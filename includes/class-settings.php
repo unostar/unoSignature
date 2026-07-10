@@ -634,7 +634,7 @@ final class Settings {
 				</div>
 
 				<p class="unosignature-template-map-row__actions">
-					<button type="button" class="button unosignature-remove-template-map-row">
+					<button type="button" class="button button-link-delete unosignature-remove-template-map-row">
 						<?php esc_html_e('Remove rule', 'unosignature'); ?>
 					</button>
 				</p>
@@ -752,7 +752,22 @@ final class Settings {
 			}
 
 			.unosignature-template-map-row__actions {
+				display: flex;
+				justify-content: flex-end;
 				margin: 12px 0 0;
+			}
+
+			.unosignature-template-map-row__actions .unosignature-remove-template-map-row {
+				color: #b32d2e;
+				border-color: #b32d2e;
+			}
+
+			.unosignature-template-map-row__actions .unosignature-remove-template-map-row:hover,
+			.unosignature-template-map-row__actions .unosignature-remove-template-map-row:focus {
+				color: #fff;
+				background: #b32d2e;
+				border-color: #8a2424;
+				box-shadow: none;
 			}
 
 			.unosignature-template-map-row .select2-selection--multiple .select2-selection__choice {

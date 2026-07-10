@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.35
+
+- Settings: move the template rule Remove button to the right and style it red so it is less likely to be mistaken for Save.
+
 ## 0.1.34
 
 - Update details modal: load the full `CHANGELOG.md` from the GitHub release tag instead of the installed copy, so skipped versions (e.g. 0.1.32–0.1.33) appear before you update.
