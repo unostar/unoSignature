@@ -141,11 +141,11 @@ function uno_build_firma_create_payload(array $rule, string $agreement_group, ar
 	$birthdate = (string) ($data['billing_birthdate'] ?? '');
 	$email = (string) ($data['billing_email'] ?? '');
 	$phone = (string) ($data['billing_phone'] ?? '');
-	$postcode = !empty($data['billing_postcode']) ? (string) $data['billing_postcode'] : 'N/A';
-	$state = !empty($data['billing_state']) ? (string) $data['billing_state'] : 'N/A';
-	$city = !empty($data['billing_city']) ? (string) $data['billing_city'] : 'N/A';
-	$address = !empty($data['billing_address_1']) ? (string) $data['billing_address_1'] : 'N/A';
-	$country = !empty($data['billing_country']) ? (string) $data['billing_country'] : 'N/A';
+	$postcode = !empty($data['billing_postcode']) ? (string) $data['billing_postcode'] : '';
+	$state = !empty($data['billing_state']) ? (string) $data['billing_state'] : '';
+	$city = !empty($data['billing_city']) ? (string) $data['billing_city'] : '';
+	$address = !empty($data['billing_address_1']) ? (string) $data['billing_address_1'] : '';
+	$country = !empty($data['billing_country']) ? (string) $data['billing_country'] : '';
 
 	$dob_name = sprintf(
 		'%s-%s-%s-DOB-%s',
@@ -336,11 +336,11 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 	$birthdate = $data['billing_birthdate'] ?? '';
 	$email = $data['billing_email'] ?? '';
 	$phone = $data['billing_phone'] ?? '';
-	$postcode = !empty($data['billing_postcode']) ? $data['billing_postcode'] : 'N/A';
-	$state = !empty($data['billing_state']) ? $data['billing_state'] : 'N/A';
-	$city = !empty($data['billing_city']) ? $data['billing_city'] : 'N/A';
-	$address = !empty($data['billing_address_1']) ? $data['billing_address_1'] : 'N/A';
-	$country = !empty($data['billing_country']) ? $data['billing_country'] : 'N/A';
+	$postcode = !empty($data['billing_postcode']) ? $data['billing_postcode'] : '';
+	$state = !empty($data['billing_state']) ? $data['billing_state'] : '';
+	$city = !empty($data['billing_city']) ? $data['billing_city'] : '';
+	$address = !empty($data['billing_address_1']) ? $data['billing_address_1'] : '';
+	$country = !empty($data['billing_country']) ? $data['billing_country'] : '';
 	$active_request = uno_get_active_request($email, $template_id);
 	$create_lock_key = 'firma_create_lock_' . md5(strtolower(trim($email)) . '|' . $template_id);
 	uno_debug([

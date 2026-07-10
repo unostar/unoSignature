@@ -2,6 +2,11 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.31
+
+- Visa `additional_applicants` textarea: put Primary Applicant first; show the Additional Applicant's header only when there are additional adults or minor children.
+- Firma recipient address: use empty strings instead of `N/A` when optional billing fields are missing.
+
 ## 0.1.30
 
 - Switch the GitHub updater to public releases: hardcoded `unostar/unoSignature`, no token required.

@@ -81,18 +81,20 @@ final class VisaTextBuilder {
 	 * @param array<string, mixed> $parties
 	 */
 	private static function build_additional_applicants_text(array $parties): string {
-		$lines = [];
+		$blocks = [];
 
 		if (self::adult_has_contact($parties['primary'] ?? [])) {
-			$lines[] = 'Primary Applicant: ' . self::format_adult_contact_line($parties['primary']);
+			$blocks[] = 'Primary Applicant: ' . self::format_adult_contact_line($parties['primary']);
 		}
+
+		$additional_lines = [];
 
 		foreach ($parties['additional_applicants'] ?? [] as $contact) {
 			if (!self::adult_has_contact($contact)) {
 				continue;
 			}
 
-			$lines[] = 'Additional Applicant (18+): ' . self::format_adult_contact_line($contact);
+			$additional_lines[] = 'Additional Applicant (18+): ' . self::format_adult_contact_line($contact);
 		}
 
 		foreach ($parties['minor_children'] ?? [] as $contact) {
@@ -100,14 +102,18 @@ final class VisaTextBuilder {
 				continue;
 			}
 
-			$lines[] = 'Minor child: ' . self::format_minor_child_line($contact);
+			$additional_lines[] = 'Minor child: ' . self::format_minor_child_line($contact);
 		}
 
-		if ($lines === []) {
+		if ($additional_lines !== []) {
+			$blocks[] = "Additional Applicant's:\n\n" . implode("\n", $additional_lines);
+		}
+
+		if ($blocks === []) {
 			return '';
 		}
 
-		return "Additional Applicant's:\n\n" . implode("\n", $lines);
+		return implode("\n\n", $blocks);
 	}
 
 	/**
