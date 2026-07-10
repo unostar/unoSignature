@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.33
+
+- Visa minor child birthdates: always format contract dates as `d-M-Y`, parsing EPO `DD/MM/YYYY` correctly instead of relying on `strtotime()`.
+
 ## 0.1.32
 
 - Fix update details modal: show the offered release changelog from GitHub when the installed plugin does not include that version yet.

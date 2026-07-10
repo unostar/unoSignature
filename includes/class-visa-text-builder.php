@@ -203,11 +203,40 @@ final class VisaTextBuilder {
 			return '';
 		}
 
-		$timestamp = strtotime($value);
-		if ($timestamp === false) {
-			return $value;
+		if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $value, $matches)) {
+			$day = (int) $matches[1];
+			$month = (int) $matches[2];
+			$year = (int) $matches[3];
+			if (checkdate($month, $day, $year)) {
+				return gmdate('d-M-Y', gmmktime(0, 0, 0, $month, $day, $year));
+			}
 		}
 
-		return gmdate('d-M-Y', $timestamp);
+		if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $matches)) {
+			$year = (int) $matches[1];
+			$month = (int) $matches[2];
+			$day = (int) $matches[3];
+			if (checkdate($month, $day, $year)) {
+				return gmdate('d-M-Y', gmmktime(0, 0, 0, $month, $day, $year));
+			}
+		}
+
+		$parsed = \DateTimeImmutable::createFromFormat('!d-M-Y', $value);
+		if ($parsed instanceof \DateTimeImmutable) {
+			$errors = \DateTimeImmutable::getLastErrors();
+			if ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0)) {
+				return $parsed->format('d-M-Y');
+			}
+		}
+
+		$parsed = \DateTimeImmutable::createFromFormat('!d-m-Y', $value);
+		if ($parsed instanceof \DateTimeImmutable) {
+			$errors = \DateTimeImmutable::getLastErrors();
+			if ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0)) {
+				return $parsed->format('d-M-Y');
+			}
+		}
+
+		return $value;
 	}
 }
