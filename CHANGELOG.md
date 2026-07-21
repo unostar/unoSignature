@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.36
+
+- Firma recipient: restore `N/A` fallback for empty `postal_code` and `state_province` so send succeeds when WooCommerce hides those fields (e.g. UAE). Keep empty strings for other optional address fields.
+
 ## 0.1.35
 
 - Settings: move the template rule Remove button to the right and style it red so it is less likely to be mistaken for Save.
