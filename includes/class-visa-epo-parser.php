@@ -38,6 +38,7 @@ final class VisaEpoParser {
 	public static function parse(array $epo_rows): array {
 		$result = [
 			'primary'               => self::empty_adult(),
+			'spouse'                => self::empty_adult(),
 			'representative'        => self::empty_adult(),
 			'sponsor'               => self::empty_adult(),
 			'additional_applicants' => [],
@@ -66,6 +67,11 @@ final class VisaEpoParser {
 
 			if ($parsed['type'] === 'primary') {
 				self::set_adult_field($result['primary'], $parsed['field'], $value);
+				continue;
+			}
+
+			if ($parsed['type'] === 'spouse') {
+				self::set_adult_field($result['spouse'], $parsed['field'], $value);
 				continue;
 			}
 
@@ -225,6 +231,10 @@ final class VisaEpoParser {
 
 		if (preg_match('/^firma_primary_(.+)$/', $cssclass, $matches)) {
 			return ['type' => 'primary', 'field' => $matches[1]];
+		}
+
+		if (preg_match('/^firma_spouse_(.+)$/', $cssclass, $matches)) {
+			return ['type' => 'spouse', 'field' => $matches[1]];
 		}
 
 		if (preg_match('/^firma_representative_(.+)$/', $cssclass, $matches)) {

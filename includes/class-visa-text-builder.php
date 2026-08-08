@@ -89,6 +89,10 @@ final class VisaTextBuilder {
 
 		$additional_lines = [];
 
+		if (self::adult_has_contact($parties['spouse'] ?? [])) {
+			$additional_lines[] = 'Spouse/Partner: ' . self::format_adult_contact_line($parties['spouse']);
+		}
+
 		foreach ($parties['additional_applicants'] ?? [] as $contact) {
 			if (!self::adult_has_contact($contact)) {
 				continue;

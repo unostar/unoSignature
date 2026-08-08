@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.37
+
+- Visa EPO: parse `firma_spouse_*` contact fields and include a `Spouse/Partner:` line in the additional applicants textarea.
+
 ## 0.1.36
 
 - Firma recipient: restore `N/A` fallback for empty `postal_code` and `state_province` so send succeeds when WooCommerce hides those fields (e.g. UAE). Keep empty strings for other optional address fields.

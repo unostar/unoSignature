@@ -193,6 +193,7 @@ function uno_build_firma_create_payload(array $rule, string $agreement_group, ar
 		uno_debug([
 			'scope' => 'visa_epo_parsed',
 			'has_primary' => \UnoSignature\VisaTextBuilder::adult_has_contact($parties['primary'] ?? []),
+			'has_spouse' => \UnoSignature\VisaTextBuilder::adult_has_contact($parties['spouse'] ?? []),
 			'has_representative' => \UnoSignature\VisaTextBuilder::adult_has_contact($parties['representative'] ?? []),
 			'has_sponsor' => \UnoSignature\VisaTextBuilder::adult_has_contact($parties['sponsor'] ?? []),
 			'additional_applicant_count' => count($parties['additional_applicants'] ?? []),
