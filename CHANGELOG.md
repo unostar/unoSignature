@@ -2,6 +2,12 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.2.0
+
+- Milestone: production release for paid consultations and visa service products (EPO → Firma checkout).
+- Visa `visa_services`: primary, spouse/partner, additional adults, minors, sponsor, and representative mapped into contract textareas.
+- Checkout session: recreate signing requests when billing or visa EPO data changes; keep the 48h declined cool-off.
+
 ## 0.1.38
 
 - Checkout: abandon stale Firma session when billing email or contract data (visa EPO) changes, and create a new signing request.
