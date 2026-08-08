@@ -2,6 +2,12 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.1.38
+
+- Checkout: abandon stale Firma session when billing email or contract data (visa EPO) changes, and create a new signing request.
+- Checkout: after a cancelled/expired request, fall through to create instead of blocking on an empty `sent` notice.
+- Checkout: do not bypass the 48h declined cool-off when cart/billing fingerprint changes.
+
 ## 0.1.37
 
 - Visa EPO: parse `firma_spouse_*` contact fields and include a `Spouse/Partner:` line in the additional applicants textarea.

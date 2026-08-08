@@ -126,6 +126,215 @@ function uno_get_cart_tmcartepo(): array
 }
 
 /**
+ * Clear Firma checkout session keys (request, URL, email, fingerprint).
+ */
+function uno_clear_firma_checkout_session(): void
+{
+	if (!WC()->session) {
+		return;
+	}
+
+	WC()->session->__unset('firma_url');
+	WC()->session->__unset('firma_request_id');
+	WC()->session->__unset('firma_request_email');
+	WC()->session->__unset('firma_request_fingerprint');
+	WC()->session->__unset('firma_template_id');
+}
+
+/**
+ * Persist Firma checkout session keys for the current attempt.
+ */
+function uno_store_firma_checkout_session(
+	string $request_id,
+	string $sign_url,
+	string $email,
+	string $template_id,
+	string $fingerprint
+): void {
+	if (!WC()->session) {
+		return;
+	}
+
+	WC()->session->set('firma_request_id', $request_id);
+	WC()->session->set('firma_url', $sign_url);
+	WC()->session->set('firma_request_email', strtolower(trim($email)));
+	WC()->session->set('firma_template_id', $template_id);
+	WC()->session->set('firma_request_fingerprint', $fingerprint);
+}
+
+/**
+ * Fingerprint of billing + contract EPO data used to build a signing request.
+ * Changing cart parties / billing after create must force a new request.
+ */
+function uno_signing_context_fingerprint(
+	string $email,
+	string $template_id,
+	string $agreement_group,
+	array $data
+): string {
+	$parts = [
+		'email' => strtolower(trim($email)),
+		'template_id' => (string) $template_id,
+		'agreement_group' => (string) $agreement_group,
+		'billing' => [
+			'first_name' => trim((string) ($data['billing_first_name'] ?? '')),
+			'last_name' => trim((string) ($data['billing_last_name'] ?? '')),
+			'title' => trim((string) ($data['billing_title'] ?? '')),
+			'birthdate' => trim((string) ($data['billing_birthdate'] ?? '')),
+			'phone' => trim((string) ($data['billing_phone'] ?? '')),
+			'address_1' => trim((string) ($data['billing_address_1'] ?? '')),
+			'city' => trim((string) ($data['billing_city'] ?? '')),
+			'state' => trim((string) ($data['billing_state'] ?? '')),
+			'postcode' => trim((string) ($data['billing_postcode'] ?? '')),
+			'country' => trim((string) ($data['billing_country'] ?? '')),
+		],
+	];
+
+	if (\UnoSignature\Config::is_visa_agreement_group($agreement_group)) {
+		$epo = [];
+		foreach (uno_get_cart_tmcartepo() as $row) {
+			if (!is_array($row)) {
+				continue;
+			}
+
+			$cssclass = sanitize_key((string) ($row['cssclass'] ?? ''));
+			if ($cssclass === '' || strpos($cssclass, 'firma_') !== 0) {
+				continue;
+			}
+			if ($cssclass === 'firma_visa_type' || substr($cssclass, -6) === '_added') {
+				continue;
+			}
+
+			$epo[] = [
+				'c' => $cssclass,
+				'v' => trim(wp_strip_all_tags((string) ($row['value'] ?? ''))),
+				'r' => array_key_exists('repeater', $row) ? $row['repeater'] : null,
+			];
+		}
+
+		usort(
+			$epo,
+			static function (array $a, array $b): int {
+				return strcmp(
+					$a['c'] . '|' . (string) $a['r'],
+					$b['c'] . '|' . (string) $b['r']
+				);
+			}
+		);
+		$parts['epo'] = $epo;
+	}
+
+	return hash('sha256', (string) wp_json_encode($parts));
+}
+
+/**
+ * Best-effort cancel of an unsent-or-in-progress signing request.
+ * Does not notify signers (client is still editing checkout).
+ */
+function uno_cancel_signing_request(string $api_key, string $request_id, string $reason = ''): void
+{
+	$request_id = trim($request_id);
+	if ($api_key === '' || $request_id === '') {
+		return;
+	}
+
+	$res = wp_remote_post(
+		"https://api.firma.dev/functions/v1/signing-request-api/signing-requests/{$request_id}/cancel",
+		[
+			'headers' => [
+				'Authorization' => 'Bearer ' . $api_key,
+				'Content-Type' => 'application/json',
+			],
+			'body' => wp_json_encode([
+				'reason' => $reason !== '' ? $reason : 'Checkout details changed; creating a new agreement.',
+				'notify_signers' => false,
+			]),
+			'timeout' => 20,
+		]
+	);
+
+	uno_debug([
+		'scope' => 'cancel_request',
+		'step' => 'result',
+		'request_id' => $request_id,
+		'http_code' => (int) wp_remote_retrieve_response_code($res),
+	]);
+}
+
+/**
+ * Whether a signing request is declined and still inside the 48h cool-off.
+ */
+function uno_signing_request_in_declined_cooloff(string $api_key, string $request_id): bool
+{
+	$request_id = trim($request_id);
+	if ($api_key === '' || $request_id === '') {
+		return false;
+	}
+
+	$res = wp_remote_get(
+		"https://api.firma.dev/functions/v1/signing-request-api/signing-requests/{$request_id}",
+		[
+			'headers' => [
+				'Authorization' => 'Bearer ' . $api_key,
+			],
+			'timeout' => 20,
+		]
+	);
+
+	$req_data = json_decode(wp_remote_retrieve_body($res), true);
+	if (!is_array($req_data)) {
+		return false;
+	}
+
+	$status = $req_data['status'] ?? null;
+	$status_value = is_string($status) ? strtolower($status) : '';
+	$is_declined = (is_array($status) && !empty($status['declined'])) || $status_value === 'declined';
+	if (!$is_declined) {
+		return false;
+	}
+
+	$declined_on = $req_data['timestamps']['declined_on'] ?? '';
+	$declined_ts = $declined_on ? strtotime((string) $declined_on) : false;
+	if (!$declined_ts) {
+		// Declined without timestamp — keep cool-off conservative.
+		return true;
+	}
+
+	return time() < ($declined_ts + 48 * HOUR_IN_SECONDS);
+}
+
+/**
+ * Drop a stale checkout signing attempt (session + active option + Firma cancel).
+ * Never used to bypass an active declined cool-off for the same attempt.
+ */
+function uno_abandon_checkout_signing_request(
+	string $api_key,
+	string $email,
+	string $template_id,
+	string $request_id,
+	string $reason
+): void {
+	if ($request_id !== '') {
+		uno_cancel_signing_request($api_key, $request_id, $reason);
+	}
+
+	uno_clear_firma_checkout_session();
+
+	if ($email !== '' && $template_id !== '') {
+		uno_delete_active_request($email, $template_id);
+	}
+
+	uno_debug([
+		'scope' => 'checkout_validation',
+		'step' => 'abandoned_stale_request',
+		'email' => $email,
+		'template_id' => $template_id,
+		'request_id' => $request_id,
+		'reason' => $reason,
+	]);
+}
+
+/**
  * Build Firma signing-request create payload for checkout.
  *
  * @param array<string, mixed> $rule
@@ -345,6 +554,7 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 	$country = !empty($data['billing_country']) ? $data['billing_country'] : '';
 	$active_request = uno_get_active_request($email, $template_id);
 	$create_lock_key = 'firma_create_lock_' . md5(strtolower(trim($email)) . '|' . $template_id);
+	$fingerprint = uno_signing_context_fingerprint($email, $template_id, $agreement_group, $data);
 	uno_debug([
 		'scope' => 'checkout_validation',
 		'step' => 'input_prepared',
@@ -352,6 +562,7 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 		'template_id' => $template_id,
 		'agreement_group' => $agreement_group,
 		'has_active_request' => is_array($active_request),
+		'fingerprint' => substr($fingerprint, 0, 12),
 	]);
 
 	if (get_option(uno_signed_option_key($email, $agreement_group))) {
@@ -362,21 +573,82 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 			'template_id' => $template_id,
 			'agreement_group' => $agreement_group,
 		]);
-		WC()->session->__unset('firma_url');
+		uno_clear_firma_checkout_session();
 		uno_delete_active_request($email, $template_id);
 		return;
 	}
 
-	$request_id = WC()->session->get('firma_request_id');
-	$sign_url = WC()->session->get('firma_url');
-
-	if ((!$request_id || !$sign_url) && !empty($active_request['request_id']) && !empty($active_request['sign_url'])) {
-		$request_id = $active_request['request_id'];
-		$sign_url = $active_request['sign_url'];
-		if (WC()->session) {
-			WC()->session->set('firma_request_id', $request_id);
-			WC()->session->set('firma_url', $sign_url);
+	// Active request is only reusable when it matches current contract fingerprint.
+	// Declined cool-off is an exception: do not abandon / recreate during the 48h lock.
+	if (is_array($active_request)) {
+		$active_fp = (string) ($active_request['fingerprint'] ?? '');
+		$active_id = (string) ($active_request['request_id'] ?? '');
+		if ($active_fp === '' || !hash_equals($active_fp, $fingerprint)) {
+			if ($active_id !== '' && uno_signing_request_in_declined_cooloff($api_key, $active_id)) {
+				uno_debug([
+					'scope' => 'checkout_validation',
+					'step' => 'preserve_declined_cooloff',
+					'request_id' => $active_id,
+					'source' => 'active_request',
+				]);
+			} else {
+				uno_abandon_checkout_signing_request(
+					$api_key,
+					$email,
+					$template_id,
+					$active_id,
+					'Checkout details changed since this agreement was created.'
+				);
+				$active_request = null;
+			}
 		}
+	}
+
+	$request_id = WC()->session ? (string) WC()->session->get('firma_request_id') : '';
+	$sign_url = WC()->session ? (string) WC()->session->get('firma_url') : '';
+	$session_email = WC()->session ? strtolower(trim((string) WC()->session->get('firma_request_email'))) : '';
+	$session_fp = WC()->session ? (string) WC()->session->get('firma_request_fingerprint') : '';
+	$session_template_id = WC()->session ? (string) WC()->session->get('firma_template_id') : '';
+
+	if ($request_id !== '') {
+		$current_email = strtolower(trim((string) $email));
+		$session_matches = ($session_email !== '' && hash_equals($session_email, $current_email))
+			&& ($session_template_id === '' || hash_equals($session_template_id, (string) $template_id))
+			&& ($session_fp !== '' && hash_equals($session_fp, $fingerprint));
+
+		if (!$session_matches) {
+			$same_email_session = ($session_email === '' || hash_equals($session_email, $current_email));
+			if ($same_email_session && uno_signing_request_in_declined_cooloff($api_key, $request_id)) {
+				uno_debug([
+					'scope' => 'checkout_validation',
+					'step' => 'preserve_declined_cooloff',
+					'request_id' => $request_id,
+					'source' => 'session',
+				]);
+				// Keep session request_id so the declined cool-off branch can run below.
+			} else {
+				if ($session_email !== '' && $session_email !== $current_email) {
+					// Different billing email in this browser — drop binding only for that other email's option.
+					uno_delete_active_request($session_email, $template_id);
+				}
+				uno_abandon_checkout_signing_request(
+					$api_key,
+					$email,
+					$template_id,
+					$request_id,
+					'Stale checkout session agreement (email or order details changed).'
+				);
+				$request_id = '';
+				$sign_url = '';
+				$active_request = uno_get_active_request($email, $template_id);
+			}
+		}
+	}
+
+	if (($request_id === '' || $sign_url === '') && !empty($active_request['request_id']) && !empty($active_request['sign_url'])) {
+		$request_id = (string) $active_request['request_id'];
+		$sign_url = (string) $active_request['sign_url'];
+		uno_store_firma_checkout_session($request_id, $sign_url, $email, $template_id, $fingerprint);
 	}
 	uno_debug([
 		'scope' => 'checkout_validation',
@@ -430,8 +702,7 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 				'template_id' => $template_id,
 				'agreement_group' => $agreement_group,
 			]);
-			WC()->session->__unset('firma_url');
-			WC()->session->__unset('firma_request_id');
+			uno_clear_firma_checkout_session();
 			update_option(uno_signed_option_key($email, $agreement_group), 1, false);
 			uno_delete_active_request($email, $template_id);
 			return;
@@ -453,8 +724,7 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 					'step' => 'declined_unlocked_cleanup',
 					'request_id' => $request_id,
 				]);
-				WC()->session->__unset('firma_url');
-				WC()->session->__unset('firma_request_id');
+				uno_clear_firma_checkout_session();
 				uno_delete_active_request($email, $template_id);
 				$request_id = '';
 				$sign_url = '';
@@ -465,11 +735,8 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 					'request_id' => $request_id,
 				]);
 				if (!empty($request_id) && !empty($sign_url)) {
-					uno_set_active_request($email, $template_id, $request_id, $sign_url);
-					if (WC()->session) {
-						WC()->session->set('firma_request_id', $request_id);
-						WC()->session->set('firma_url', $sign_url);
-					}
+					uno_set_active_request($email, $template_id, $request_id, $sign_url, $fingerprint);
+					uno_store_firma_checkout_session($request_id, $sign_url, $email, $template_id, $fingerprint);
 
 					$errors->add('esignature_declined_wait', __('You previously declined this agreement. If you change your mind, you can try signing again after 48 hours.', 'unosignature') . ' ' . uno_get_firma_sign_payload($sign_url, $request_id));
 					return;
@@ -486,20 +753,19 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 				'step' => 'cancelled_or_expired_cleanup',
 				'request_id' => $request_id,
 			]);
-			WC()->session->__unset('firma_url');
-			WC()->session->__unset('firma_request_id');
+			uno_clear_firma_checkout_session();
 			uno_delete_active_request($email, $template_id);
 			$request_id = '';
 			$sign_url = '';
-		}
-
-		if ($is_sent) {
+			// Fall through to create a new request (do not treat cancelled as still "sent").
+		} elseif ($is_sent && $request_id !== '' && $sign_url !== '') {
 			uno_debug([
 				'scope' => 'checkout_validation',
 				'step' => 'sent_require_signature_notice',
 				'request_id' => $request_id,
 			]);
-			uno_set_active_request($email, $template_id, $request_id, $sign_url);
+			uno_set_active_request($email, $template_id, $request_id, $sign_url, $fingerprint);
+			uno_store_firma_checkout_session($request_id, $sign_url, $email, $template_id, $fingerprint);
 			$errors->add('esignature_required', __('This service requires an agreement. Please sign the agreement to continue.', 'unosignature') . ' ' . uno_get_firma_sign_payload($sign_url, $request_id));
 			return;
 		}
@@ -519,7 +785,8 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 			return;
 		}
 
-		uno_set_active_request($email, $template_id, $request_id, $sign_url);
+		uno_set_active_request($email, $template_id, $request_id, $sign_url, $fingerprint);
+		uno_store_firma_checkout_session($request_id, $sign_url, $email, $template_id, $fingerprint);
 		$errors->add('esignature_required', __('This service requires an agreement. Please sign the agreement to continue.', 'unosignature') . ' ' . uno_get_firma_sign_payload($sign_url, $request_id));
 		return;
 	}
@@ -545,10 +812,13 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 			'create_lock_key' => $create_lock_key,
 		]);
 		if (!empty($active_request['sign_url'])) {
-			if (WC()->session) {
-				WC()->session->set('firma_request_id', $active_request['request_id']);
-				WC()->session->set('firma_url', $active_request['sign_url']);
-			}
+			uno_store_firma_checkout_session(
+				(string) $active_request['request_id'],
+				(string) $active_request['sign_url'],
+				$email,
+				$template_id,
+				$fingerprint
+			);
 			$errors->add('esignature_required', __('This service requires an agreement. Please sign the agreement to continue.', 'unosignature') . ' ' . uno_get_firma_sign_payload($active_request['sign_url'], $active_request['request_id']));
 			return;
 		}
@@ -599,11 +869,9 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 		return;
 	}
 
-	WC()->session->set('firma_request_id', $api['id']);
 	$recipient_id = $api['recipients'][0]['id'];
 	$signing_url = "https://app.firma.dev/signing/$recipient_id";
-
-	WC()->session->set('firma_url', $signing_url);
+	uno_store_firma_checkout_session((string) $api['id'], $signing_url, $email, $template_id, $fingerprint);
 
 	$send_result = uno_send_signing_request($api_key, $api['id']);
 	uno_debug([
@@ -620,7 +888,7 @@ add_action('woocommerce_after_checkout_validation', function (array $data, WP_Er
 		return;
 	}
 
-	uno_set_active_request($email, $template_id, $api['id'], $signing_url);
+	uno_set_active_request($email, $template_id, $api['id'], $signing_url, $fingerprint);
 	delete_transient($create_lock_key);
 
 	$errors->add('esignature_required', __('This service requires an agreement. Please sign the agreement to continue.', 'unosignature') . ' ' . uno_get_firma_sign_payload($signing_url, $api['id']));
@@ -662,12 +930,7 @@ add_action('woocommerce_checkout_create_order', function (WC_Order $order) {
  * Clears Firma checkout session markers once order is created.
  */
 add_action('woocommerce_checkout_order_processed', function () {
-	if (!WC()->session) {
-		return;
-	}
-
-	WC()->session->__unset('firma_url');
-	WC()->session->__unset('firma_request_id');
+	uno_clear_firma_checkout_session();
 }, 10);
 
 /**
@@ -764,14 +1027,20 @@ function uno_get_active_request(string $email, string $template_id)
  * Also writes a reverse lookup map: request_id → email + template_id,
  * used by the webhook handler where only request_id is known.
  */
-function uno_set_active_request(string $email, string $template_id, string $request_id, string $sign_url)
-{
+function uno_set_active_request(
+	string $email,
+	string $template_id,
+	string $request_id,
+	string $sign_url,
+	string $fingerprint = ''
+) {
 	$key = uno_active_request_option_key($email, $template_id);
 	update_option($key, [
 		'request_id' => (string) $request_id,
 		'sign_url' => (string) $sign_url,
 		'email' => (string) $email,
 		'template_id' => (string) $template_id,
+		'fingerprint' => (string) $fingerprint,
 		'updated_at' => gmdate('c'),
 	], false);
 
@@ -786,6 +1055,7 @@ function uno_set_active_request(string $email, string $template_id, string $requ
 		'email' => $email,
 		'template_id' => $template_id,
 		'request_id' => $request_id,
+		'has_fingerprint' => $fingerprint !== '',
 	]);
 }
 
