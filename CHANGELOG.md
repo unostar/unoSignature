@@ -2,6 +2,10 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.3.3
+
+- Plugin details list the notes for the version shown beside them, including the version that is already installed.
+
 ## 0.3.2
 
 - Plugin strings use gettext. Russian translations ship in `languages/unosignature-ru_RU.po`.

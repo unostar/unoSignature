@@ -54,7 +54,7 @@ final class Changelog {
 		}
 
 		if ($markdown !== '') {
-			$html .= self::markdown_to_html($markdown, $limit, $target_version);
+			$html .= self::markdown_to_html($markdown, $limit);
 		} elseif ($html === '' && trim($release_body) !== '') {
 			$html .= self::body_to_html($target_version, $release_body);
 		}
