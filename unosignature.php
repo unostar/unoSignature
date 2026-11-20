@@ -7,6 +7,7 @@
  * Author: unostar.dev
  * Author URI: https://unostar.dev/
  * Text Domain: unosignature
+ * Domain Path: /languages
  * Requires Plugins: woocommerce
  * Update URI: https://github.com/unostar/unoSignature
  * Requires PHP: 7.4

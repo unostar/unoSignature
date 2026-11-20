@@ -59,6 +59,8 @@ final class Settings {
 		wp_localize_script('unosignature-settings', 'unosignatureSettings', [
 			'optionKey' => Config::OPTION_KEY,
 			'productSearchAction' => 'unosignature_search_products',
+			'ruleLabel' => __('Rule %d', 'unosignature'),
+			'emptyRules' => __('No signing rules configured.', 'unosignature'),
 		]);
 	}
 
@@ -218,6 +220,7 @@ final class Settings {
 				'categories'      => array_values(array_filter(array_map('sanitize_title', (array) ($entry['categories'] ?? [])))),
 				'product_ids'     => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['product_ids'] ?? []))))),
 				'excluded_ids'    => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['excluded_ids'] ?? []))))),
+				'page_ids'        => self::sanitize_page_ids($entry['page_ids'] ?? []),
 				'agreement_group' => sanitize_key((string) ($entry['agreement_group'] ?? '')),
 				'template_id'     => $template_id,
 				'field_additional_applicants' => self::sanitize_uuid_field((string) ($entry['field_additional_applicants'] ?? '')),
@@ -227,6 +230,22 @@ final class Settings {
 		}
 
 		return $map;
+	}
+
+	/**
+	 * @param mixed $ids
+	 * @return array<int, int>
+	 */
+	private static function sanitize_page_ids($ids): array {
+		$clean = [];
+
+		foreach (array_map('absint', (array) $ids) as $page_id) {
+			if ($page_id > 0 && get_post_type($page_id) === 'page') {
+				$clean[] = $page_id;
+			}
+		}
+
+		return array_values(array_unique($clean));
 	}
 
 	private static function sanitize_uuid_field(string $value): string {
@@ -260,6 +279,7 @@ final class Settings {
 			}
 		}
 		$product_categories = self::get_product_categories_for_settings($required_category_slugs);
+		$pages = self::get_pages_for_settings();
 		?>
 		<div class="wrap">
 			<h1>unoSignature</h1>
@@ -267,15 +287,15 @@ final class Settings {
 			<form method="post" action="options.php">
 				<?php settings_fields('unosignature'); ?>
 				<table class="form-table" role="presentation">
-					<?php self::text_row('firma_api_key', 'Firma API key (live)', $options, 'password', !empty($options['firma_api_key']) ? 'Key is saved; leave blank to keep it' : ''); ?>
-					<?php self::text_row('firma_test_api_key', 'Firma API key (test)', $options, 'password', !empty($options['firma_test_api_key']) ? 'Key is saved; leave blank to keep it' : ''); ?>
-					<?php self::text_row('firma_webhook_secret', 'Firma webhook secret', $options, 'password', !empty($options['firma_webhook_secret']) ? 'Secret is saved; leave blank to keep it' : ''); ?>
-					<?php self::text_row('firma_owner_copy_email', 'Owner copy email', $options, 'email'); ?>
+					<?php self::text_row('firma_api_key', __('Firma API key (live)', 'unosignature'), $options, 'password', !empty($options['firma_api_key']) ? __('Key is saved; leave blank to keep it', 'unosignature') : ''); ?>
+					<?php self::text_row('firma_test_api_key', __('Firma API key (test)', 'unosignature'), $options, 'password', !empty($options['firma_test_api_key']) ? __('Key is saved; leave blank to keep it', 'unosignature') : ''); ?>
+					<?php self::text_row('firma_webhook_secret', __('Firma webhook secret', 'unosignature'), $options, 'password', !empty($options['firma_webhook_secret']) ? __('Secret is saved; leave blank to keep it', 'unosignature') : ''); ?>
+					<?php self::text_row('firma_owner_copy_email', __('Owner copy email', 'unosignature'), $options, 'email'); ?>
 				</table>
 
 				<h2><?php esc_html_e('Signing agreement rules', 'unosignature'); ?></h2>
 				<p class="description">
-					<?php esc_html_e('Map WooCommerce products or categories to Firma templates. First matching rule wins. Rules without a template ID are ignored on save. For visa_services rules, set the three Firma textarea field UUIDs on the same row.', 'unosignature'); ?>
+					<?php esc_html_e('Map WooCommerce products, categories, or a public page to a Firma template. Checkout uses the first matching product or category. A public page uses the rule that lists it. Rules without a template ID are ignored on save. For visa_services rules, set the three Firma textarea field UUIDs on the same row.', 'unosignature'); ?>
 				</p>
 				<div class="unosignature-template-map" id="unosignature-template-map">
 					<?php if (empty($template_map)) : ?>
@@ -284,7 +304,7 @@ final class Settings {
 						</p>
 					<?php else : ?>
 						<?php foreach ($template_map as $index => $row) : ?>
-							<?php self::render_template_map_row((int) $index, $row, $product_categories); ?>
+							<?php self::render_template_map_row((int) $index, $row, $product_categories, $pages); ?>
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</div>
@@ -296,16 +316,16 @@ final class Settings {
 
 				<table class="form-table" role="presentation">
 					<tr>
-						<th scope="row">Firma debug</th>
+						<th scope="row"><?php esc_html_e('Firma debug', 'unosignature'); ?></th>
 						<td>
 							<label>
 								<input type="checkbox" name="<?php echo esc_attr(Config::OPTION_KEY); ?>[firma_debug]" value="1" <?php checked(!empty($options['firma_debug'])); ?> />
-								Enable debug logging
+								<?php esc_html_e('Enable debug logging', 'unosignature'); ?>
 							</label>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row">Firma test mode</th>
+						<th scope="row"><?php esc_html_e('Firma test mode', 'unosignature'); ?></th>
 						<td>
 							<label>
 								<input type="checkbox" name="<?php echo esc_attr(Config::OPTION_KEY); ?>[firma_use_test_key]" value="1" <?php checked(!empty($options['firma_use_test_key'])); ?> />
@@ -319,7 +339,7 @@ final class Settings {
 			</form>
 
 			<script type="text/template" id="unosignature-template-map-row-template">
-				<?php self::render_template_map_row('__INDEX__', [], $product_categories); ?>
+				<?php self::render_template_map_row('__INDEX__', [], $product_categories, $pages); ?>
 			</script>
 		</div>
 		<?php
@@ -475,13 +495,59 @@ final class Settings {
 	}
 
 	/**
-	 * @param int|string $index
+	 * Published pages in every WPML language. The current admin language filter hides translations.
+	 *
+	 * @return array<int, string>
 	 */
-	private static function render_template_map_row($index, array $row, array $product_categories): void {
+	private static function get_pages_for_settings(): array {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			"
+			SELECT ID, post_title
+			FROM {$wpdb->posts}
+			WHERE post_type = 'page'
+				AND post_status = 'publish'
+			ORDER BY post_title ASC
+			"
+		);
+
+		$pages = [];
+		foreach ((array) $rows as $row) {
+			$page_id = (int) $row->ID;
+			$title = trim((string) $row->post_title);
+			if ($title === '') {
+				$title = __('(no title)', 'unosignature');
+			}
+
+			$language = apply_filters(
+				'wpml_element_language_code',
+				null,
+				[
+					'element_id'   => $page_id,
+					'element_type' => 'post_page',
+				]
+			);
+			if (is_string($language) && $language !== '') {
+				$title .= ' (' . strtoupper($language) . ')';
+			}
+
+			$pages[$page_id] = $title;
+		}
+
+		return $pages;
+	}
+
+	/**
+	 * @param int|string $index
+	 * @param array<int, string> $pages
+	 */
+	private static function render_template_map_row($index, array $row, array $product_categories, array $pages): void {
 		$option_key = Config::OPTION_KEY;
 		$name_prefix = $option_key . '[template_map][' . $index . ']';
 		$product_ids = array_map('absint', (array) ($row['product_ids'] ?? []));
 		$excluded_ids = array_map('absint', (array) ($row['excluded_ids'] ?? []));
+		$page_ids = array_values(array_unique(array_filter(array_map('absint', (array) ($row['page_ids'] ?? [])))));
 		$categories = array_map('sanitize_title', (array) ($row['categories'] ?? []));
 		$admin_label = (string) ($row['admin_label'] ?? '');
 		$agreement_group = (string) ($row['agreement_group'] ?? '');
@@ -574,6 +640,33 @@ final class Settings {
 							</option>
 						<?php endforeach; ?>
 					</select>
+				</div>
+
+				<div class="unosignature-template-map-row__field">
+					<label><?php esc_html_e('Pages', 'unosignature'); ?></label>
+					<select
+						class="wc-enhanced-select"
+						multiple="multiple"
+						name="<?php echo esc_attr($name_prefix); ?>[page_ids][]"
+						data-placeholder="<?php esc_attr_e('Select pages…', 'unosignature'); ?>"
+					>
+						<?php foreach ($page_ids as $page_id) : ?>
+							<?php if (!isset($pages[$page_id])) : ?>
+								<option value="<?php echo esc_attr((string) $page_id); ?>" selected="selected">
+									<?php echo esc_html(sprintf(__('Page %d', 'unosignature'), $page_id)); ?>
+								</option>
+							<?php endif; ?>
+						<?php endforeach; ?>
+						<?php foreach ($pages as $page_id => $page_label) : ?>
+							<option
+								value="<?php echo esc_attr((string) $page_id); ?>"
+								<?php selected(in_array((int) $page_id, $page_ids, true)); ?>
+							>
+								<?php echo esc_html($page_label); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+					<p class="description"><?php esc_html_e('Public page for this rule. WPML translations of a selected page count as the same page. Checkout matches products and categories.', 'unosignature'); ?></p>
 				</div>
 
 				<div class="unosignature-template-map-row__inline">

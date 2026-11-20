@@ -403,7 +403,7 @@ function uno_build_firma_create_payload(array $rule, string $agreement_group, ar
 		'recipients'  => [$recipient],
 	];
 
-	if (\UnoSignature\Config::is_visa_agreement_group($agreement_group)) {
+	if (\UnoSignature\Config::rule_uses_visa_fields($rule)) {
 		if ($parties === null) {
 			$parties = \UnoSignature\VisaEpoParser::parse($epo_rows ?? uno_get_cart_tmcartepo());
 		}

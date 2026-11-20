@@ -187,7 +187,7 @@ final class Changelog {
 	}
 
 	private static function items_to_html(string $version, array $items): string {
-		$html = '<h4>version ' . esc_html($version) . '</h4>';
+		$html = '<h4>' . esc_html(sprintf(__('Version %s', 'unosignature'), $version)) . '</h4>';
 		$html .= '<ul>';
 
 		foreach ($items as $item) {

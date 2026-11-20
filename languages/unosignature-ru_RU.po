@@ -1,0 +1,279 @@
+# Russian translation for unoSignature.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: unoSignature\n"
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Domain: unosignature\n"
+
+msgid "(no title)"
+msgstr "(без названия)"
+
+msgid "Add applicant"
+msgstr "Добавить заявителя"
+
+msgid "Add child"
+msgstr "Добавить ребенка"
+
+msgid "Add rule"
+msgstr "Добавить правило"
+
+msgid "Additional applicant (18+)"
+msgstr "Дополнительный заявитель (18+)"
+
+msgid "Address"
+msgstr "Адрес"
+
+msgid "Admin label only. Shown in the list above; not used on checkout."
+msgstr "Только подпись в админке. Видна в списке выше; при оформлении заказа не используется."
+
+msgid "Agreement declined. Please sign to continue."
+msgstr "Договор отклонён. Подпишите его, чтобы продолжить."
+
+msgid "Agreement group"
+msgstr "Группа договора"
+
+msgid "Agreement is declined but sign link is unavailable. Please contact support."
+msgstr "Договор отклонён, но ссылка для подписи недоступна. Обратитесь в поддержку."
+
+msgid "An error occurred during signing. Please try again."
+msgstr "Во время подписания произошла ошибка. Попробуйте снова."
+
+msgid "As in the passport, Latin letters"
+msgstr "Как в паспорте, латинскими буквами"
+
+msgid "Categories"
+msgstr "Категории"
+
+msgid "Checking signature..."
+msgstr "Проверяем подпись..."
+
+msgid "City, region"
+msgstr "Город, область"
+
+msgid "Configure contract templates, signing fields, and agreement rules in %s."
+msgstr "Шаблоны договоров, поля подписи и правила настраиваются в %s."
+
+msgid "Country"
+msgstr "Страна"
+
+msgid "Date of birth"
+msgstr "Дата рождения"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Enable debug logging"
+msgstr "Включить журнал отладки"
+
+msgid "Enter a date of birth."
+msgstr "Введите дату рождения."
+
+msgid "Enter a valid email address."
+msgstr "Введите корректный email."
+
+msgid "Enter the primary applicant date of birth."
+msgstr "Введите дату рождения основного заявителя."
+
+msgid "Excluded products"
+msgstr "Исключённые товары"
+
+msgid "Field: additional applicants"
+msgstr "Поле: дополнительные заявители"
+
+msgid "Field: representative"
+msgstr "Поле: представитель"
+
+msgid "Field: sponsor"
+msgstr "Поле: спонсор"
+
+msgid "Fill in every field for the parties you selected."
+msgstr "Заполните все поля у отмеченных сторон."
+
+msgid "Fill in the primary applicant, including title, name, date of birth, address, email and telephone."
+msgstr "Заполните основного заявителя: обращение, имя, дату рождения, адрес, email и телефон."
+
+msgid "Firma API credentials and checkout signing rules."
+msgstr "Ключи Firma и правила подписания при оформлении заказа."
+
+msgid "Firma API key (live)"
+msgstr "Ключ API Firma (боевой)"
+
+msgid "Firma API key (test)"
+msgstr "Ключ API Firma (тестовый)"
+
+msgid "Firma debug"
+msgstr "Отладка Firma"
+
+msgid "Firma template ID"
+msgstr "ID шаблона Firma"
+
+msgid "Firma template_field_id UUID"
+msgstr "UUID template_field_id в Firma"
+
+msgid "Firma test mode"
+msgstr "Тестовый режим Firma"
+
+msgid "Firma webhook secret"
+msgstr "Секрет вебхука Firma"
+
+msgid "First name"
+msgstr "Имя"
+
+msgid "I signed, continue checkout"
+msgstr "Я подписал, продолжить оформление"
+
+msgid "Key is saved; leave blank to keep it"
+msgstr "Ключ сохранён; оставьте поле пустым, чтобы не менять его"
+
+msgid "Last name"
+msgstr "Фамилия"
+
+msgid "Map WooCommerce products, categories, or a public page to a Firma template. Checkout uses the first matching product or category. A public page uses the rule that lists it. Rules without a template ID are ignored on save. For visa_services rules, set the three Firma textarea field UUIDs on the same row."
+msgstr "Сопоставьте товары WooCommerce, категории или публичную страницу с шаблоном Firma. Оформление заказа берёт первое подходящее правило по товару или категории. Публичная страница берёт правило, в котором она указана. Правила без ID шаблона при сохранении отбрасываются. Для правил visa_services укажите в той же строке три UUID текстовых полей Firma."
+
+msgid "Minor child"
+msgstr "Ребенок до 18"
+
+msgid "Names and country use Latin letters. Address, city and postcode use Latin letters and digits. Telephone is 7 to 15 digits."
+msgstr "Имя, фамилия и страна — латинскими буквами. Адрес, город и индекс — латиницей и цифрами. Телефон — от 7 до 15 цифр."
+
+msgid "No signing rules configured."
+msgstr "Правила подписания не заданы."
+
+msgid "Other parties"
+msgstr "Другие стороны"
+
+msgid "Owner copy email"
+msgstr "Email для копии владельцу"
+
+msgid "Page %d"
+msgstr "Страница %d"
+
+msgid "Pages"
+msgstr "Страницы"
+
+msgid "Please wait a moment and try again."
+msgstr "Подождите немного и попробуйте снова."
+
+msgid "Postal / ZIP code"
+msgstr "Индекс"
+
+msgid "Preparing the agreement..."
+msgstr "Готовим договор..."
+
+msgid "Primary applicant"
+msgstr "Основной заявитель"
+
+msgid "Products"
+msgstr "Товары"
+
+msgid "Public page for this rule. WPML translations of a selected page count as the same page. Checkout matches products and categories."
+msgstr "Публичная страница этого правила. Переводы WPML выбранной страницы считаются той же страницей. Оформление заказа по-прежнему смотрит на товары и категории."
+
+msgid "Remove"
+msgstr "Удалить"
+
+msgid "Remove rule"
+msgstr "Удалить правило"
+
+msgid "Representative"
+msgstr "Представитель"
+
+msgid "Rule %d"
+msgstr "Правило %d"
+
+msgid "Rule name"
+msgstr "Название правила"
+
+msgid "Search for products…"
+msgstr "Поиск товаров…"
+
+msgid "Secret is saved; leave blank to keep it"
+msgstr "Секрет сохранён; оставьте поле пустым, чтобы не менять его"
+
+msgid "Select categories…"
+msgstr "Выберите категории…"
+
+msgid "Select pages…"
+msgstr "Выберите страницы…"
+
+msgid "Selected services require signing an agreement. After you complete all details, you will be prompted to sign the agreement. After signing, you will be able to proceed to payment."
+msgstr "Выбранные услуги требуют подписания договора. Когда все данные будут заполнены, вам предложат подписать договор. После подписания можно перейти к оплате."
+
+msgid "Sign agreement"
+msgstr "Подписать договор"
+
+msgid "Signing agreement rules"
+msgstr "Правила договоров"
+
+msgid "Signing is temporarily unavailable."
+msgstr "Подписание временно недоступно."
+
+msgid "Sponsor"
+msgstr "Спонсор"
+
+msgid "Spouse / Partner"
+msgstr "Супруг / партнер"
+
+msgid "The agreement is signed. You can close this page."
+msgstr "Договор подписан. Эту страницу можно закрыть."
+
+msgid "The form expired. Reload the page and try again."
+msgstr "Форма устарела. Обновите страницу и попробуйте снова."
+
+msgid "The visa agreement is not configured."
+msgstr "Договор не настроен."
+
+msgid "The window was closed. Your details are still here. You can sign again."
+msgstr "Окно закрыто. Данные на месте, можно подписать ещё раз."
+
+msgid "There was an error preparing the agreement. Please try again."
+msgstr "Не удалось подготовить договор. Попробуйте снова."
+
+msgid "There was an error retrieving the eSignature document. Please try again."
+msgstr "Не удалось получить документ для подписи. Попробуйте снова."
+
+msgid "There was an error sending the agreement for signature. Please try again."
+msgstr "Не удалось отправить договор на подпись. Попробуйте снова."
+
+msgid "This service requires an agreement. Please sign the agreement to continue."
+msgstr "Для этой услуги нужен договор. Подпишите его, чтобы продолжить."
+
+msgid "Title"
+msgstr "Обращение"
+
+msgid "Use test API key (no live credits; watermarked signing requests)"
+msgstr "Использовать тестовый ключ API (без списания боевых кредитов; на документах будет водяной знак)"
+
+msgid "Version %s"
+msgstr "Версия %s"
+
+msgid "Visa textarea fields (optional). Used when agreement group is visa_services."
+msgstr "Поля текстовых областей визы (необязательно). Используются, когда группа договора — visa_services."
+
+msgid "WhatsApp/Telegram"
+msgstr "WhatsApp/Telegram"
+
+msgid "WordPress integration for the firma.dev e-signature API — configurable contracts, signing fields, and dynamic document content."
+msgstr "Интеграция WordPress с API электронной подписи firma.dev: настраиваемые договоры, поля подписи и подстановка данных в документ."
+
+msgid "You previously declined this agreement. If you change your mind, you can try signing again after 48 hours."
+msgstr "Вы отклонили этот договор. Подписать снова можно через 48 часов."
+
+msgid "e.g. Paid consultation EN"
+msgstr "например, Paid consultation EN"
+
+msgid "e.g. paid_consultation"
+msgstr "например, paid_consultation"
+
+msgid "unoSignature is a WordPress integration layer for the %s e-signature API."
+msgstr "unoSignature связывает WordPress с API электронной подписи %s."
+
+msgid "unoSignature requires WooCommerce to be active."
+msgstr "Для unoSignature нужен активный WooCommerce."
+

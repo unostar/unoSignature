@@ -74,7 +74,9 @@
 			return adminLabel;
 		}
 
-		return 'Rule ' + ruleNumber;
+		var template = window.unosignatureSettings?.ruleLabel || 'Rule %d';
+
+		return template.replace('%d', String(ruleNumber));
 	}
 
 	function reindexTemplateMapRows() {
@@ -114,9 +116,11 @@
 		}
 
 		if (!$empty.length) {
-			$container.append(
-				'<p class="unosignature-template-map-empty description">No signing rules configured.</p>'
-			);
+			var $note = $('<p>', {
+				class: 'unosignature-template-map-empty description',
+				text: window.unosignatureSettings?.emptyRules || ''
+			});
+			$container.append($note);
 		}
 	}
 

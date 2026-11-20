@@ -101,8 +101,16 @@ final class Updater {
 		$settings_url = esc_url(admin_url('options-general.php?page=unosignature'));
 
 		return wp_kses(
-			'<p><strong>unoSignature</strong> is a WordPress integration layer for the <a href="https://firma.dev/">firma.dev</a> e-signature API.</p>'
-			. '<p>Configure contract templates, signing fields, and agreement rules in <strong><a href="' . $settings_url . '">Settings → unoSignature</a></strong>.</p>',
+			'<p>' . sprintf(
+				/* translators: %s: firma.dev link HTML */
+				__('unoSignature is a WordPress integration layer for the %s e-signature API.', 'unosignature'),
+				'<a href="https://firma.dev/">firma.dev</a>'
+			) . '</p>'
+			. '<p>' . sprintf(
+				/* translators: %s: settings page link HTML */
+				__('Configure contract templates, signing fields, and agreement rules in %s.', 'unosignature'),
+				'<strong><a href="' . $settings_url . '">Settings → unoSignature</a></strong>'
+			) . '</p>',
 			[
 				'p'      => [],
 				'strong' => [],

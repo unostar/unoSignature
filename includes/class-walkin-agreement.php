@@ -16,11 +16,6 @@ if (!defined('ABSPATH')) {
 }
 
 final class WalkinAgreement {
-	private const PAGE_SLUGS = [
-		'sign-visa-services-agreement',
-		'sign-visa-services-agreement-en',
-	];
-
 	private const TITLES = ['Mr.', 'Mrs.', 'Ms.', 'Miss', 'Mx.', 'Dr.'];
 
 	/**
@@ -122,7 +117,8 @@ final class WalkinAgreement {
 			return self::error_response($message, 400, $fields);
 		}
 
-		$rule = self::visa_rule();
+		$page_id = absint($posted['unosignature_walkin_page'] ?? $request->get_param('unosignature_walkin_page'));
+		$rule = self::rule_for_page($page_id);
 		if ($rule === null) {
 			return self::error_response(self::text('not_configured'), 500);
 		}
@@ -133,8 +129,9 @@ final class WalkinAgreement {
 		}
 
 		$template_id = (string) $rule['template_id'];
+		$agreement_group = (string) ($rule['agreement_group'] ?? '');
 		$email = (string) $signer['billing_email'];
-		$fingerprint = uno_signing_context_fingerprint($email, $template_id, 'visa_services', $signer, [], $parties);
+		$fingerprint = uno_signing_context_fingerprint($email, $template_id, $agreement_group, $signer, [], $parties);
 		$active = uno_get_active_request($email, $template_id);
 
 		if (is_array($active)) {
@@ -165,7 +162,7 @@ final class WalkinAgreement {
 		}
 		set_transient($lock_key, 1, 20);
 
-		$payload = uno_build_firma_create_payload($rule, 'visa_services', $signer, [], $parties);
+		$payload = uno_build_firma_create_payload($rule, $agreement_group, $signer, [], $parties);
 		$created = self::create_and_send($api_key, $payload);
 		delete_transient($lock_key);
 
@@ -197,6 +194,7 @@ final class WalkinAgreement {
 		ob_start();
 		echo '<form id="unosignature-walkin" class="unosignature-walkin" method="post" action="" novalidate>';
 		echo '<input type="hidden" name="unosignature_walkin_token" value="' . esc_attr(self::form_token()) . '">';
+		echo '<input type="hidden" name="unosignature_walkin_page" value="' . esc_attr((string) get_queried_object_id()) . '">';
 
 		echo '<div class="unosignature-walkin-board">';
 		echo '<div class="unosignature-walkin-col" data-col="left">';
@@ -594,27 +592,61 @@ final class WalkinAgreement {
 	}
 
 	private static function is_agreement_page(\WP_Post $post): bool {
-		if (in_array($post->post_name, self::PAGE_SLUGS, true)) {
-			return true;
-		}
-
-		return has_shortcode($post->post_content, 'unosignature_visa_agreement');
+		return self::rule_for_page((int) $post->ID) !== null;
 	}
 
 	/**
+	 * Rule that lists this page or its WPML translation. First match wins.
+	 *
 	 * @return array<string, mixed>|null
 	 */
-	private static function visa_rule(): ?array {
+	private static function rule_for_page(int $post_id): ?array {
+		if ($post_id <= 0) {
+			return null;
+		}
+
 		foreach (Config::get_template_map() as $entry) {
-			if (!is_array($entry)) {
+			if (!is_array($entry) || !Config::rule_uses_visa_fields($entry)) {
 				continue;
 			}
-			if (($entry['agreement_group'] ?? '') === 'visa_services' && !empty($entry['template_id'])) {
-				return $entry;
+
+			foreach ((array) ($entry['page_ids'] ?? []) as $page_id) {
+				if (self::page_matches((int) $page_id, $post_id)) {
+					return $entry;
+				}
 			}
 		}
 
 		return null;
+	}
+
+	private static function page_matches(int $selected, int $current): bool {
+		if ($selected <= 0 || $current <= 0) {
+			return false;
+		}
+
+		if ($selected === $current) {
+			return true;
+		}
+
+		if (!has_filter('wpml_object_id')) {
+			return false;
+		}
+
+		$translated = (int) apply_filters('wpml_object_id', $selected, 'page', true);
+		if ($translated === $current) {
+			return true;
+		}
+
+		$default_language = apply_filters('wpml_default_language', null);
+		if (!is_string($default_language) || $default_language === '') {
+			return false;
+		}
+
+		$selected_source = (int) apply_filters('wpml_object_id', $selected, 'page', true, $default_language);
+		$current_source = (int) apply_filters('wpml_object_id', $current, 'page', true, $default_language);
+
+		return $selected_source > 0 && $selected_source === $current_source;
 	}
 
 	/**
@@ -688,88 +720,44 @@ final class WalkinAgreement {
 	 * @return array<string, string>
 	 */
 	private static function labels(): array {
-		$language = apply_filters('wpml_current_language', null);
-		$russian = $language === 'ru' || ($language === null && str_starts_with(determine_locale(), 'ru'));
-		if ($russian) {
-			return [
-				'primary'            => 'Основной заявитель',
-				'others'             => 'Другие стороны',
-				'spouse'             => 'Супруг / партнер',
-				'representative'     => 'Представитель',
-				'sponsor'            => 'Спонсор',
-				'adult'              => 'Дополнительный заявитель (18+)',
-				'child'              => 'Ребенок до 18',
-				'title'              => 'Обращение',
-				'first_name'         => 'Имя',
-				'last_name'          => 'Фамилия',
-				'address'            => 'Адрес',
-				'city_region'        => 'Город, область',
-				'postcode'           => 'Индекс',
-				'country'            => 'Страна',
-				'email'              => 'Email',
-				'messenger'          => 'WhatsApp/Telegram',
-				'birthdate'          => 'Дата рождения',
-				'passport'           => 'Как в паспорте, латинскими буквами',
-				'add_adult'          => 'Добавить заявителя',
-				'add_child'          => 'Добавить ребенка',
-				'remove'             => 'Удалить',
-				'submit'             => 'Подписать договор',
-				'preparing'          => 'Готовим договор...',
-				'signed'             => 'Договор подписан. Эту страницу можно закрыть.',
-				'closed'             => 'Окно закрыто. Данные на месте, можно подписать ещё раз.',
-				'expired'            => 'Форма устарела. Обновите страницу и попробуйте снова.',
-				'incomplete'         => 'Заполните основного заявителя: обращение, имя, дату рождения, адрес, email и телефон.',
-				'parties_incomplete' => 'Заполните все поля у отмеченных сторон.',
-				'email_invalid'      => 'Введите корректный email.',
-				'format'             => 'Имя, фамилия и страна — латинскими буквами. Адрес, город и индекс — латиницей и цифрами. Телефон — от 7 до 15 цифр.',
-				'date_invalid'       => 'Введите дату рождения.',
-				'birthdate_invalid'  => 'Введите дату рождения основного заявителя.',
-				'not_configured'     => 'Договор не настроен.',
-				'unavailable'        => 'Подписание временно недоступно.',
-				'declined'           => 'Вы отклонили этот договор. Подписать снова можно через 48 часов.',
-				'wait'               => 'Подождите немного и попробуйте снова.',
-				'error'              => 'Не удалось подготовить договор. Попробуйте снова.',
-			];
-		}
-
 		return [
-			'primary'            => 'Primary applicant',
-			'others'             => 'Other parties',
-			'spouse'             => 'Spouse / Partner',
-			'representative'     => 'Representative',
-			'sponsor'            => 'Sponsor',
-			'adult'              => 'Additional applicant (18+)',
-			'child'              => 'Minor child',
-			'title'              => 'Title',
-			'first_name'         => 'First name',
-			'last_name'          => 'Last name',
-			'address'            => 'Address',
-			'city_region'        => 'City, region',
-			'postcode'           => 'Postal / ZIP code',
-			'country'            => 'Country',
-			'email'              => 'Email',
-			'messenger'          => 'WhatsApp/Telegram',
-			'birthdate'          => 'Date of birth',
-			'passport'           => 'As in the passport, Latin letters',
-			'add_adult'          => 'Add applicant',
-			'add_child'          => 'Add child',
-			'remove'             => 'Remove',
-			'submit'             => 'Sign agreement',
-			'preparing'          => 'Preparing the agreement...',
-			'signed'             => 'The agreement is signed. You can close this page.',
-			'closed'             => 'The window was closed. Your details are still here. You can sign again.',
-			'expired'            => 'The form expired. Reload the page and try again.',
-			'incomplete'         => 'Fill in the primary applicant, including title, name, date of birth, address, email and telephone.',
-			'parties_incomplete' => 'Fill in every field for the parties you selected.',
-			'email_invalid'      => 'Enter a valid email address.',
-			'format'             => 'Names and country use Latin letters. Address, city and postcode use Latin letters and digits. Telephone is 7 to 15 digits.',
-			'date_invalid'       => 'Enter a date of birth.',
-			'birthdate_invalid'  => 'Enter the primary applicant date of birth.',
-			'not_configured'     => 'The visa agreement is not configured.',
-			'unavailable'        => 'Signing is temporarily unavailable.',
-			'declined'           => 'You previously declined this agreement. If you change your mind, you can try signing again after 48 hours.',
-			'wait'               => 'Please wait a moment and try again.',
-			'error'              => 'There was an error preparing the agreement. Please try again.',
+			'primary'            => __('Primary applicant', 'unosignature'),
+			'others'             => __('Other parties', 'unosignature'),
+			'spouse'             => __('Spouse / Partner', 'unosignature'),
+			'representative'     => __('Representative', 'unosignature'),
+			'sponsor'            => __('Sponsor', 'unosignature'),
+			'adult'              => __('Additional applicant (18+)', 'unosignature'),
+			'child'              => __('Minor child', 'unosignature'),
+			'title'              => __('Title', 'unosignature'),
+			'first_name'         => __('First name', 'unosignature'),
+			'last_name'          => __('Last name', 'unosignature'),
+			'address'            => __('Address', 'unosignature'),
+			'city_region'        => __('City, region', 'unosignature'),
+			'postcode'           => __('Postal / ZIP code', 'unosignature'),
+			'country'            => __('Country', 'unosignature'),
+			'email'              => __('Email', 'unosignature'),
+			'messenger'          => __('WhatsApp/Telegram', 'unosignature'),
+			'birthdate'          => __('Date of birth', 'unosignature'),
+			'passport'           => __('As in the passport, Latin letters', 'unosignature'),
+			'add_adult'          => __('Add applicant', 'unosignature'),
+			'add_child'          => __('Add child', 'unosignature'),
+			'remove'             => __('Remove', 'unosignature'),
+			'submit'             => __('Sign agreement', 'unosignature'),
+			'preparing'          => __('Preparing the agreement...', 'unosignature'),
+			'signed'             => __('The agreement is signed. You can close this page.', 'unosignature'),
+			'closed'             => __('The window was closed. Your details are still here. You can sign again.', 'unosignature'),
+			'expired'            => __('The form expired. Reload the page and try again.', 'unosignature'),
+			'incomplete'         => __('Fill in the primary applicant, including title, name, date of birth, address, email and telephone.', 'unosignature'),
+			'parties_incomplete' => __('Fill in every field for the parties you selected.', 'unosignature'),
+			'email_invalid'      => __('Enter a valid email address.', 'unosignature'),
+			'format'             => __('Names and country use Latin letters. Address, city and postcode use Latin letters and digits. Telephone is 7 to 15 digits.', 'unosignature'),
+			'date_invalid'       => __('Enter a date of birth.', 'unosignature'),
+			'birthdate_invalid'  => __('Enter the primary applicant date of birth.', 'unosignature'),
+			'not_configured'     => __('The visa agreement is not configured.', 'unosignature'),
+			'unavailable'        => __('Signing is temporarily unavailable.', 'unosignature'),
+			'declined'           => __('You previously declined this agreement. If you change your mind, you can try signing again after 48 hours.', 'unosignature'),
+			'wait'               => __('Please wait a moment and try again.', 'unosignature'),
+			'error'              => __('There was an error preparing the agreement. Please try again.', 'unosignature'),
 		];
 	}
 

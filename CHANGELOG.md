@@ -2,6 +2,12 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.3.2
+
+- Plugin strings use gettext. Russian translations ship in `languages/unosignature-ru_RU.po`.
+- A signing rule can list public pages as well as products and categories. Checkout still matches products and categories. The visa agreement form is shown on a page listed by a rule that uses the visa template fields.
+- Visa textarea overrides are sent when a rule has those field UUIDs, including a rule whose agreement group is not `visa_services`.
+
 ## 0.3.1
 
 - Walk-in visa agreement: a plain HTML form on the public pages opens the same Firma visa template, without a product, EPO, or WooCommerce order.

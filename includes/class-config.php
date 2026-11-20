@@ -104,6 +104,25 @@ final class Config {
 		return sanitize_key($agreement_group) === 'visa_services';
 	}
 
+	/**
+	 * Visa contract text is used for the visa_services group and for any rule that has textarea field UUIDs.
+	 *
+	 * @param array<string, mixed> $rule
+	 */
+	public static function rule_uses_visa_fields(array $rule): bool {
+		if (self::is_visa_agreement_group((string) ($rule['agreement_group'] ?? ''))) {
+			return true;
+		}
+
+		foreach (self::get_visa_firma_fields($rule) as $field_id) {
+			if ($field_id !== '') {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private static function normalize_template_map(array $map): array {
 		$normalized = [];
 
@@ -122,6 +141,7 @@ final class Config {
 				'categories'      => array_values(array_filter(array_map('sanitize_title', (array) ($entry['categories'] ?? [])))),
 				'product_ids'     => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['product_ids'] ?? []))))),
 				'excluded_ids'    => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['excluded_ids'] ?? []))))),
+				'page_ids'        => array_values(array_unique(array_filter(array_map('absint', (array) ($entry['page_ids'] ?? []))))),
 				'agreement_group' => sanitize_key((string) ($entry['agreement_group'] ?? '')),
 				'template_id'     => $template_id,
 				'field_additional_applicants' => self::normalize_uuid_field((string) ($entry['field_additional_applicants'] ?? '')),
