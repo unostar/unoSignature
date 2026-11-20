@@ -26,7 +26,10 @@ final class Plugin {
 
 		require_once UNOSIGNATURE_PATH . 'includes/class-visa-epo-parser.php';
 		require_once UNOSIGNATURE_PATH . 'includes/class-visa-text-builder.php';
+		require_once UNOSIGNATURE_PATH . 'includes/class-walkin-agreement.php';
 		require_once UNOSIGNATURE_PATH . 'includes/legacy-consultation.php';
+
+		WalkinAgreement::init();
 	}
 
 	public static function woocommerce_missing_notice(): void {

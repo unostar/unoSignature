@@ -110,7 +110,7 @@ final class VisaTextBuilder {
 		}
 
 		if ($additional_lines !== []) {
-			$blocks[] = "Additional Applicant's:\n\n" . implode("\n", $additional_lines);
+			$blocks[] = "Additional Applicant's:\n\n" . implode("\n\n", $additional_lines);
 		}
 
 		if ($blocks === []) {
@@ -199,6 +199,10 @@ final class VisaTextBuilder {
 		}
 
 		return $name . ', ' . $birthdate;
+	}
+
+	public static function format_contract_date(string $value): string {
+		return self::format_date($value);
 	}
 
 	private static function format_date(string $value): string {

@@ -2,6 +2,16 @@
 
 All notable changes to unoSignature will be documented in this file.
 
+## 0.3.1
+
+- Walk-in visa agreement: a plain HTML form on the public pages opens the same Firma visa template, without a product, EPO, or WooCommerce order.
+- Walk-in form token does not expire and does not depend on the WordPress login, so a long form fill still submits.
+- Walk-in page: a completed Firma signature clears the form and shows success. A failed send keeps the entered details.
+- Walk-in fields use the checkout and EPO format checks. A checked optional party is required; an empty unchecked party is left out of the contract.
+- On a wide screen the primary applicant stays beside Other parties, and each opened party block fills the shorter column.
+- Checkout payload and fingerprint accept optional party data, so the walk-in page does not read the cart.
+- Visa textarea: a blank line separates each person under Additional Applicant's.
+
 ## 0.2.0
 
 - Milestone: production release for paid consultations and visa service products (EPO → Firma checkout).

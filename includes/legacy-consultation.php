@@ -170,7 +170,9 @@ function uno_signing_context_fingerprint(
 	string $email,
 	string $template_id,
 	string $agreement_group,
-	array $data
+	array $data,
+	?array $epo_rows = null,
+	?array $parties = null
 ): string {
 	$parts = [
 		'email' => strtolower(trim($email)),
@@ -192,7 +194,8 @@ function uno_signing_context_fingerprint(
 
 	if (\UnoSignature\Config::is_visa_agreement_group($agreement_group)) {
 		$epo = [];
-		foreach (uno_get_cart_tmcartepo() as $row) {
+		$rows = $epo_rows ?? uno_get_cart_tmcartepo();
+		foreach ($rows as $row) {
 			if (!is_array($row)) {
 				continue;
 			}
@@ -222,6 +225,10 @@ function uno_signing_context_fingerprint(
 			}
 		);
 		$parts['epo'] = $epo;
+	}
+
+	if ($parties !== null) {
+		$parts['parties'] = $parties;
 	}
 
 	return hash('sha256', (string) wp_json_encode($parts));
@@ -339,9 +346,10 @@ function uno_abandon_checkout_signing_request(
  *
  * @param array<string, mixed> $rule
  * @param array<string, mixed> $data Checkout posted data.
+ * @param array<string, mixed>|null $parties Parsed visa parties. When set, cart and EPO rows are not read.
  * @return array<string, mixed>
  */
-function uno_build_firma_create_payload(array $rule, string $agreement_group, array $data): array
+function uno_build_firma_create_payload(array $rule, string $agreement_group, array $data, ?array $epo_rows = null, ?array $parties = null): array
 {
 	$template_id = (string) ($rule['template_id'] ?? '');
 	$first = (string) ($data['billing_first_name'] ?? '');
@@ -396,7 +404,9 @@ function uno_build_firma_create_payload(array $rule, string $agreement_group, ar
 	];
 
 	if (\UnoSignature\Config::is_visa_agreement_group($agreement_group)) {
-		$parties = \UnoSignature\VisaEpoParser::parse(uno_get_cart_tmcartepo());
+		if ($parties === null) {
+			$parties = \UnoSignature\VisaEpoParser::parse($epo_rows ?? uno_get_cart_tmcartepo());
+		}
 		$field_overrides = \UnoSignature\VisaTextBuilder::build_field_overrides($parties, $rule);
 
 		uno_debug([

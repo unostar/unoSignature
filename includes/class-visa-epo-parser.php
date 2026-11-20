@@ -66,6 +66,13 @@ final class VisaEpoParser {
 			$repeater = self::repeater_index($row);
 
 			if ($parsed['type'] === 'primary') {
+				if (in_array($parsed['field'], ['title', 'birthdate'], true)) {
+					if (($result['primary'][$parsed['field']] ?? '') === '') {
+						$result['primary'][$parsed['field']] = $value;
+					}
+					continue;
+				}
+
 				self::set_adult_field($result['primary'], $parsed['field'], $value);
 				continue;
 			}
